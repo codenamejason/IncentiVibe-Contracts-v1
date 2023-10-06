@@ -8,7 +8,8 @@ contract Will4USNFTTest is Test {
     Will4USNFT public nftContract;
 
     function setUp() public {
-        nftContract = new Will4USNFT();
+        address deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
+        nftContract = new Will4USNFT(deployerAddress);
     }
 
     function test_Mint() public {}
