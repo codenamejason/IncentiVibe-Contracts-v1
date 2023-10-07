@@ -18,8 +18,6 @@ contract Will4USNFTTest is Test {
 
     function test_awardCampaignItem() public {
         vm.startPrank(deployerAddress);
-        nftContract.addCampaignMember(deployerAddress);
-
         vm.expectEmit(true, true, true, true);
         emit ItemAwarded(1, makeAddr("recipient1"), 1);
         uint256 tokenId = nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);

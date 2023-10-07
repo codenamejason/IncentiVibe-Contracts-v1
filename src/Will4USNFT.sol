@@ -55,18 +55,11 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      * Constructor *********
      */
     constructor(address owner) ERC721("Will 4 US NFT Collection", "WILL4USNFT") Ownable(owner) {
+        // add the owner to the campaign members
+        campaignMembers[owner] = true;
+
         // set the owner address
         _transferOwnership(owner);
-    }
-
-    /**
-     * Overrides
-     */
-
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721URIStorage) returns (bool) {}
-
-    function tokenURI(uint256 tokenId) public view virtual override(ERC721URIStorage) returns (string memory) {
-        return super.tokenURI(tokenId);
     }
 
     /**
@@ -142,5 +135,15 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
         _setTokenURI(tokenId, _tokenURI);
 
         return tokenId;
+    }
+
+    /**
+     * Overrides
+     */
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721URIStorage) returns (bool) {}
+
+    function tokenURI(uint256 tokenId) public view virtual override(ERC721URIStorage) returns (string memory) {
+        return super.tokenURI(tokenId);
     }
 }
