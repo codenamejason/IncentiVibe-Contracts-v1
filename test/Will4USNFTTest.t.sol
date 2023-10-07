@@ -27,4 +27,22 @@ contract Will4USNFTTest is Test {
     }
 
     function test_UpdateMetadata() public {}
+
+    function test_addCampaignMember(address _member) public {}
+
+    function test_removeCampaignMember(address _member) public {}
+    
+    function test_awardCampaignItem(address _recipient, string memory _tokenURI, uint256 _classId) public {}
+
+    function test_addClass(string memory _name, string memory _description, string memory _imagePointer, uint256 _supply) public {}
+
+    function test_updateTokenMetadata(uint256 _tokenId, string memory _tokenURI) public {}
+
+    function test_getClassById(uint256 _id) public {}
+
+    function test__mintCampaingnItem(address _recipient, string memory _tokenURI, uint256 _classId) public {}
+
+    function test_supportsInterface(bytes4 interfaceId) public {}
+
+    function test_tokenURI(uint256 tokenId) public {}
 }
