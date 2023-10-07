@@ -1,6 +1,6 @@
-name: test
+name: foundry test
 
-on: workflow_dispatch
+on: [push, pull_request]
 
 env:
   FOUNDRY_PROFILE: ci
@@ -29,6 +29,8 @@ jobs:
         id: build
 
       - name: Run Forge tests
+        env:
+          DEPLOYER_ADDRESS: ${{ secrets.DEPLOYER_ADDRESS }}
         run: |
           forge test -vvv
         id: test
