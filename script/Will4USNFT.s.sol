@@ -5,19 +5,21 @@ import {Script} from "forge-std/Script.sol";
 
 import {Will4USNFT} from "../src/Will4USNFT.sol";
 
-/// @notice This script is used to create test data for the Allo V2 contracts
-/// @dev Register recipients and set their status ~
-/// Use this to run
+/// @notice This script is used to deploy the Will4USNFT contract
+/// @dev Use this to run
 ///      'source .env' if you are using a .env file for your rpc-url
-///      'forge script script/Will4USNFT.s.sol:Will4USNFTScript --rpc-url $GOERLI_RPC_URL --broadcast  -vvvv'
+///      'forge script script/Will4USNFT.s.sol:Will4USNFTScript --rpc-url $GOERLI_RPC_URL --broadcast --verify  -vvvv'
 contract Will4USNFTScript is Script {
     function setUp() public {}
 
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
+        address deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
         vm.startBroadcast(deployerPrivateKey);
 
-        Will4USNFT nftContract = new Will4USNFT();
+        Will4USNFT nftContract = new Will4USNFT(deployerAddress);
+
+        nftContract.awardCampaignItem(deployerAddress, "https://placeholder.com/1", 1);
 
         vm.stopBroadcast();
     }
