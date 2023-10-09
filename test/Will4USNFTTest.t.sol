@@ -33,7 +33,6 @@ contract Will4USNFTTest is Test {
         uint256 tokenId1 = nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
 
         // mint a second token
-
         vm.expectEmit(true, true, true, true);
         emit ItemAwarded(3, makeAddr("recipient1"), 1);
         uint256 tokenId2 = nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
@@ -41,6 +40,36 @@ contract Will4USNFTTest is Test {
         vm.stopPrank();
         assertEq(tokenId1, 2, "Token Id should be 2");
         assertEq(tokenId2, 3, "Token Id should be 3");
+    }
+
+    function test_revert_awardCampaignItem_MAX_MINTABLE_PER_CLASS() public {
+        vm.startPrank(deployerAddress);
+        nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
+        nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
+        nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
+        nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
+        nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
+        vm.expectRevert();
+        nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
+
+        vm.stopPrank();
+    }
+
+    function test_batchAwardCampaignItem() public {
+        vm.startPrank(deployerAddress);
+        address[] memory recipients = new address[](2);
+        recipients[0] = makeAddr("recipient1");
+        recipients[1] = makeAddr("recipient2");
+        string[] memory tokenURIs = new string[](2);
+        tokenURIs[0] = "https://placeholder.com/1";
+        tokenURIs[1] = "https://placeholder.com/2";
+        uint256[] memory classIds = new uint256[](2);
+        classIds[0] = 1;
+        classIds[1] = 1;
+
+        nftContract.batchAwardCampaignItem(recipients, tokenURIs, classIds);
+
+        vm.stopPrank();
     }
 
     function test_updateTokenMetadata() public {
@@ -81,5 +110,27 @@ contract Will4USNFTTest is Test {
 
         vm.stopPrank();
         assertEq(nftContract.getClassById(2).name, "name2", "Class name should be name");
+    }
+
+    function test_getTotalSupplyForClass() public {
+        assertEq(nftContract.getTotalSupplyForClass(1), 1e7, "Total supply should be 1e7");
+    }
+
+    function test_setClassTokenSupply() public {
+        vm.prank(deployerAddress);
+        nftContract.setClassTokenSupply(1, 1e10);
+
+        assertEq(nftContract.getClassById(1).supply, 1e10, "Total supply should be 1e10");
+    }
+
+    function test_getTotalSupplyForAllClasses() public {
+        assertEq(nftContract.getTotalSupplyForAllClasses(), 1e7, "Total supply should be 1e7");
+    }
+
+    function test_setMaxMintablePerClass() public {
+        vm.prank(deployerAddress);
+        nftContract.setMaxMintablePerClass(10);
+
+        assertEq(nftContract.MAX_MINTABLE_PER_CLASS(), 10, "Total supply should be 1e10");
     }
 }
