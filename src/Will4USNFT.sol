@@ -13,8 +13,8 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
     /**
      * State Variables ********
      */
-    uint256 private _tokenIds;
-    uint256 public classIds;
+    uint256 private _tokenIds = 1;
+    uint256 public classIds = 1;
 
     uint256 public mintCounter;
 
@@ -90,7 +90,6 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
         returns (uint256)
     {
         uint256 tokenId = _mintCampaingnItem(_recipient, _tokenURI, _classId);
-        classes[_classId].minted = classes[_classId].minted++;
 
         emit ItemAwarded(tokenId, _recipient, _classId);
 
@@ -104,7 +103,7 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
         string memory _metadata,
         uint256 _supply
     ) external onlyCampaingnMember(msg.sender) {
-        uint256 id = ++classIds;
+        uint256 id = classIds++;
 
         classes[id] =
             Class(id, _supply, 0, _name, _description, _imagePointer, "https://a_new_pointer_to_json_object.io");
@@ -138,7 +137,7 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
         internal
         returns (uint256)
     {
-        uint256 tokenId = ++_tokenIds;
+        uint256 tokenId = _tokenIds++;
         mintCounter++;
 
         // update the class minted count

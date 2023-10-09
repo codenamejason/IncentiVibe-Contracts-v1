@@ -19,18 +19,28 @@ contract Will4USNFTTest is Test {
         deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
         nftContract = new Will4USNFT(deployerAddress);
 
-        vm.prank(deployerAddress);
+        vm.startPrank(deployerAddress);
+        nftContract.addCampaignMember(deployerAddress);
+        nftContract.addClass("name", "description", "imagePointer", "https://a_new_pointer_to_json_object.io", 1e7);
         nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
+        vm.stopPrank();
     }
 
     function test_awardCampaignItem() public {
         vm.startPrank(deployerAddress);
         vm.expectEmit(true, true, true, true);
         emit ItemAwarded(2, makeAddr("recipient1"), 1);
-        uint256 tokenId = nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
-        vm.stopPrank();
+        uint256 tokenId1 = nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
 
-        assertEq(tokenId, 2, "Token Id should be 1");
+        // mint a second token
+
+        vm.expectEmit(true, true, true, true);
+        emit ItemAwarded(3, makeAddr("recipient1"), 1);
+        uint256 tokenId2 = nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
+
+        vm.stopPrank();
+        assertEq(tokenId1, 2, "Token Id should be 2");
+        assertEq(tokenId2, 3, "Token Id should be 3");
     }
 
     function test_updateTokenMetadata() public {
@@ -66,10 +76,10 @@ contract Will4USNFTTest is Test {
     function test_addClass() public {
         vm.startPrank(deployerAddress);
         vm.expectEmit(true, true, true, true);
-        emit ClassAdded(1, "https://a_new_pointer_to_json_object.io");
-        nftContract.addClass("name", "description", "imagePointer", "https://a_new_pointer_to_json_object.io", 1e7);
+        emit ClassAdded(2, "https://a_new_pointer_to_json_object.io");
+        nftContract.addClass("name2", "description", "imagePointer", "https://a_new_pointer_to_json_object.io", 1e7);
 
         vm.stopPrank();
-        assertEq(nftContract.getClassById(1).name, "name", "Class name should be name");
+        assertEq(nftContract.getClassById(2).name, "name2", "Class name should be name");
     }
 }
