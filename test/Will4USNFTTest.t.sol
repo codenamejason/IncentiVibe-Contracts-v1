@@ -10,39 +10,66 @@ contract Will4USNFTTest is Test {
     address deployerAddress;
 
     event ItemAwarded(uint256 indexed tokenId, address indexed recipient, uint256 indexed classId);
+    event TokenMetadataUpdated(address indexed sender, uint256 indexed tokenId, string tokenURI);
+    event CampaignMemberAdded(address indexed member);
+    event CampaignMemberRemoved(address indexed member);
+    event ClassAdded(uint256 indexed classId, string metadata);
 
     function setUp() public {
         deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
         nftContract = new Will4USNFT(deployerAddress);
+
+        vm.prank(deployerAddress);
+        nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
     }
 
     function test_awardCampaignItem() public {
         vm.startPrank(deployerAddress);
         vm.expectEmit(true, true, true, true);
-        emit ItemAwarded(1, makeAddr("recipient1"), 1);
+        emit ItemAwarded(2, makeAddr("recipient1"), 1);
         uint256 tokenId = nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
         vm.stopPrank();
 
-        assertEq(tokenId, 1, "Token Id should be 1");
+        assertEq(tokenId, 2, "Token Id should be 1");
     }
 
-    function test_UpdateMetadata() public {}
+    function test_updateTokenMetadata() public {
+        vm.startPrank(deployerAddress);
+        vm.expectEmit(true, true, true, true);
+        emit TokenMetadataUpdated(deployerAddress, 1, "https://placeholder.com/1");
+        nftContract.updateTokenMetadata(1, "https://placeholder.com/1");
 
-    function test_addCampaignMember(address _member) public {}
+        vm.stopPrank();
+        assertEq(nftContract.tokenURI(1), "https://placeholder.com/1", "Token URI should be https://placeholder.com/1");
+    }
 
-    function test_removeCampaignMember(address _member) public {}
-    
-    function test_awardCampaignItem(address _recipient, string memory _tokenURI, uint256 _classId) public {}
+    function test_addCampaignMember() public {
+        vm.startPrank(deployerAddress);
+        vm.expectEmit(true, true, true, true);
+        emit CampaignMemberAdded(makeAddr("member1"));
+        nftContract.addCampaignMember(makeAddr("member1"));
 
-    function test_addClass(string memory _name, string memory _description, string memory _imagePointer, uint256 _supply) public {}
+        vm.stopPrank();
+        assertEq(nftContract.campaignMembers(makeAddr("member1")), true, "Member should be added");
+    }
 
-    function test_updateTokenMetadata(uint256 _tokenId, string memory _tokenURI) public {}
+    function test_removeCampaignMember() public {
+        vm.startPrank(deployerAddress);
+        vm.expectEmit(true, true, true, true);
+        emit CampaignMemberRemoved(makeAddr("member1"));
+        nftContract.removeCampaignMember(makeAddr("member1"));
 
-    function test_getClassById(uint256 _id) public {}
+        vm.stopPrank();
+        assertEq(nftContract.campaignMembers(makeAddr("member1")), false, "Member should be removed");
+    }
 
-    function test__mintCampaingnItem(address _recipient, string memory _tokenURI, uint256 _classId) public {}
+    function test_addClass() public {
+        vm.startPrank(deployerAddress);
+        vm.expectEmit(true, true, true, true);
+        emit ClassAdded(1, "https://a_new_pointer_to_json_object.io");
+        nftContract.addClass("name", "description", "imagePointer", "https://a_new_pointer_to_json_object.io", 1e7);
 
-    function test_supportsInterface(bytes4 interfaceId) public {}
-
-    function test_tokenURI(uint256 tokenId) public {}
+        vm.stopPrank();
+        assertEq(nftContract.getClassById(1).name, "name", "Class name should be name");
+    }
 }

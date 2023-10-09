@@ -41,6 +41,9 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      */
     event ItemAwarded(uint256 indexed tokenId, address indexed recipient, uint256 indexed classId);
     event TokenMetadataUpdated(address indexed sender, uint256 indexed tokenId, string tokenURI);
+    event CampaignMemberAdded(address indexed member);
+    event CampaignMemberRemoved(address indexed member);
+    event ClassAdded(uint256 indexed classId, string metadata);
 
     /**
      * Modifiers ************
@@ -68,10 +71,14 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
 
     function addCampaignMember(address _member) external onlyOwner {
         campaignMembers[_member] = true;
+
+        emit CampaignMemberAdded(_member);
     }
 
     function removeCampaignMember(address _member) external onlyOwner {
         campaignMembers[_member] = false;
+
+        emit CampaignMemberRemoved(_member);
     }
 
     /**
@@ -83,20 +90,26 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
         returns (uint256)
     {
         uint256 tokenId = _mintCampaingnItem(_recipient, _tokenURI, _classId);
+        classes[_classId].minted = classes[_classId].minted++;
 
         emit ItemAwarded(tokenId, _recipient, _classId);
 
         return tokenId;
     }
 
-    function addClass(string memory _name, string memory _description, string memory _imagePointer, uint256 _supply)
-        external
-        onlyCampaingnMember(msg.sender)
-    {
+    function addClass(
+        string memory _name,
+        string memory _description,
+        string memory _imagePointer,
+        string memory _metadata,
+        uint256 _supply
+    ) external onlyCampaingnMember(msg.sender) {
         uint256 id = ++classIds;
 
         classes[id] =
             Class(id, _supply, 0, _name, _description, _imagePointer, "https://a_new_pointer_to_json_object.io");
+
+        emit ClassAdded(id, _metadata);
     }
 
     function updateTokenMetadata(uint256 _tokenId, string memory _tokenURI) external onlyCampaingnMember(msg.sender) {
