@@ -17,7 +17,7 @@ contract Will4USNFTScript is Script {
         address deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
         vm.startBroadcast(deployerPrivateKey);
 
-        Will4USNFT nftContract = new Will4USNFT(deployerAddress);
+        Will4USNFT nftContract = new Will4USNFT(deployerAddress, 5);
 
         nftContract.awardCampaignItem(deployerAddress, "https://placeholder.com/1", 1);
 

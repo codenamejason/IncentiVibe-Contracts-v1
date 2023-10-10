@@ -2,7 +2,6 @@
 pragma solidity 0.8.20;
 
 import {ERC721URIStorage} from "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import {ERC721} from "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 
@@ -13,9 +12,10 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
     /**
      * State Variables ********
      */
-    uint256 private _tokenIds = 1;
-    uint256 public classIds = 1;
-    uint256 public MAX_MINTABLE_PER_CLASS;
+    uint256 private _tokenIds;
+    uint256 public classIds;
+    uint256 public totalClassesSupply;
+    uint256 public maxMintablePerClass;
 
     mapping(uint256 => Class) public classes;
     mapping(address => bool) public campaignMembers;
@@ -35,7 +35,7 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      * Errors ************
      */
     error InvalidTokenId(uint256 tokenId);
-    error MaxMintablePerClassReached(uint256 classId, uint256 maxMintable);
+    error MaxMintablePerClassReached(address recipient, uint256 classId, uint256 maxMintable);
 
     /**
      * Events ************
@@ -45,6 +45,8 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
     event CampaignMemberAdded(address indexed member);
     event CampaignMemberRemoved(address indexed member);
     event ClassAdded(uint256 indexed classId, string metadata);
+    event UpdatedClassTokenSupply(uint256 indexed classId, uint256 supply);
+    event UpdatedMaxMintablePerClass(uint256 maxMintable);
 
     /**
      * Modifiers ************
@@ -63,11 +65,14 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
     /**
      * Constructor *********
      */
-    constructor(address owner) ERC721("Will 4 US NFT Collection", "WILL4USNFT") Ownable(owner) {
+    constructor(address owner, uint256 _maxMintablePerClass)
+        ERC721("Will 4 US NFT Collection", "WILL4USNFT")
+        Ownable(owner)
+    {
         // add the owner to the campaign members
-        campaignMembers[owner] = true;
+        _addCampaignMember(owner);
 
-        MAX_MINTABLE_PER_CLASS = 5;
+        maxMintablePerClass = _maxMintablePerClass;
 
         // set the owner address
         _transferOwnership(owner);
@@ -83,6 +88,15 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      * @param _member The member to add
      */
     function addCampaignMember(address _member) external onlyOwner {
+        _addCampaignMember(_member);
+    }
+
+    /**
+     * @notice Adds a campaign member
+     * @dev This function is internal
+     * @param _member The member to add
+     */
+    function _addCampaignMember(address _member) internal {
         campaignMembers[_member] = true;
 
         emit CampaignMemberAdded(_member);
@@ -111,8 +125,8 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
         onlyCampaingnMember(msg.sender)
         returns (uint256)
     {
-        if (mintedPerClass[_recipient][_classId] > MAX_MINTABLE_PER_CLASS) {
-            revert MaxMintablePerClassReached(_classId, MAX_MINTABLE_PER_CLASS);
+        if (mintedPerClass[_recipient][_classId] > maxMintablePerClass) {
+            revert MaxMintablePerClassReached(_recipient, _classId, maxMintablePerClass);
         }
 
         uint256 tokenId = _mintCampaingnItem(_recipient, _tokenURI, _classId);
@@ -135,10 +149,11 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
         string[] memory _tokenURIs,
         uint256[] memory _classIds
     ) external onlyCampaingnMember(msg.sender) returns (uint256[] memory) {
-        uint256[] memory tokenIds = new uint256[](_recipients.length);
+        uint256 length = _recipients.length;
+        uint256[] memory tokenIds = new uint256[](length);
 
-        for (uint256 i = 0; i < _recipients.length; i++) {
-            if (mintedPerClass[_recipients[i]][_classIds[i]] > MAX_MINTABLE_PER_CLASS) {
+        for (uint256 i = 0; i < length;) {
+            if (mintedPerClass[_recipients[i]][_classIds[i]] > maxMintablePerClass) {
                 revert("You have reached the max mintable for this class");
             }
 
@@ -146,6 +161,10 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
             mintedPerClass[_recipients[i]][_classIds[i]]++;
 
             emit ItemAwarded(tokenIds[i], _recipients[i], _classIds[i]);
+
+            unchecked {
+                ++i;
+            }
         }
 
         return tokenIds;
@@ -167,7 +186,8 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
         string memory _metadata,
         uint256 _supply
     ) external onlyCampaingnMember(msg.sender) {
-        uint256 id = classIds++;
+        uint256 id = ++classIds;
+        totalClassesSupply += _supply;
 
         classes[id] = Class(id, _supply, 0, _name, _description, _imagePointer, _metadata);
 
@@ -197,7 +217,22 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      * @param _supply The new supply
      */
     function setClassTokenSupply(uint256 _classId, uint256 _supply) external onlyCampaingnMember(msg.sender) {
+        uint256 currentSupply = classes[_classId].supply;
+        uint256 minted = classes[_classId].minted;
+
+        if (_supply < currentSupply) {
+            // if the new supply is less than the current supply, we need to check if the new supply is less than the minted
+            // if it is, then we need to revert
+            if (_supply < minted) {
+                revert("The new supply cannot be less than the minted");
+            }
+        }
+
+        // update the total supply
+        totalClassesSupply = totalClassesSupply - currentSupply + _supply;
+
         classes[_classId].supply = _supply;
+        emit UpdatedClassTokenSupply(_classId, _supply);
     }
 
     /**
@@ -206,7 +241,8 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      * @param _maxMintable The new max mintable
      */
     function setMaxMintablePerClass(uint256 _maxMintable) external onlyCampaingnMember(msg.sender) {
-        MAX_MINTABLE_PER_CLASS = _maxMintable;
+        maxMintablePerClass = _maxMintable;
+        emit UpdatedMaxMintablePerClass(_maxMintable);
     }
 
     /**
@@ -233,13 +269,7 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      * @notice Returns the total supply for all classes
      */
     function getTotalSupplyForAllClasses() external view returns (uint256) {
-        uint256 totalSupply = 0;
-
-        for (uint256 i = 1; i < classIds; i++) {
-            totalSupply += classes[i].supply;
-        }
-
-        return totalSupply;
+        return totalClassesSupply;
     }
 
     /**
@@ -261,7 +291,7 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
         internal
         returns (uint256)
     {
-        uint256 tokenId = _tokenIds++;
+        uint256 tokenId = ++_tokenIds;
 
         // update the class minted count
         classes[_classId].minted++;

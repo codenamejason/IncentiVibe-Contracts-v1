@@ -17,7 +17,7 @@ contract Will4USNFTTest is Test {
 
     function setUp() public {
         deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
-        nftContract = new Will4USNFT(deployerAddress);
+        nftContract = new Will4USNFT(deployerAddress, 5);
 
         vm.startPrank(deployerAddress);
         nftContract.addCampaignMember(deployerAddress);
@@ -42,7 +42,7 @@ contract Will4USNFTTest is Test {
         assertEq(tokenId2, 3, "Token Id should be 3");
     }
 
-    function test_revert_awardCampaignItem_MAX_MINTABLE_PER_CLASS() public {
+    function test_revert_awardCampaignItem_maxMintablePerClass() public {
         vm.startPrank(deployerAddress);
         nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
         nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
@@ -131,6 +131,6 @@ contract Will4USNFTTest is Test {
         vm.prank(deployerAddress);
         nftContract.setMaxMintablePerClass(10);
 
-        assertEq(nftContract.MAX_MINTABLE_PER_CLASS(), 10, "Total supply should be 1e10");
+        assertEq(nftContract.maxMintablePerClass(), 10, "Total supply should be 1e10");
     }
 }
