@@ -19,7 +19,7 @@ contract Will4USNFTScript is Script {
 
         Will4USNFT nftContract = new Will4USNFT(deployerAddress, 5);
 
-        nftContract.awardCampaignItem(deployerAddress, "https://placeholder.com/1", 1);
+        nftContract.awardCampaignItem(deployerAddress, 1);
 
         vm.stopBroadcast();
     }

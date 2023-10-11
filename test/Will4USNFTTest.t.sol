@@ -24,7 +24,7 @@ contract Will4USNFTTest is Test {
         vm.startPrank(deployerAddress);
         nftContract.addCampaignMember(deployerAddress);
         nftContract.addClass("name", "description", "imagePointer", "https://a_new_pointer_to_json_object.io", 1e7);
-        nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
+        nftContract.awardCampaignItem(makeAddr("recipient1"), 1);
         vm.stopPrank();
     }
 
@@ -32,12 +32,12 @@ contract Will4USNFTTest is Test {
         vm.startPrank(deployerAddress);
         vm.expectEmit(true, true, true, true);
         emit ItemAwarded(2, makeAddr("recipient1"), 1);
-        uint256 tokenId1 = nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
+        uint256 tokenId1 = nftContract.awardCampaignItem(makeAddr("recipient1"), 1);
 
         // mint a second token
         vm.expectEmit(true, true, true, true);
         emit ItemAwarded(3, makeAddr("recipient1"), 1);
-        uint256 tokenId2 = nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
+        uint256 tokenId2 = nftContract.awardCampaignItem(makeAddr("recipient1"), 1);
 
         vm.stopPrank();
         assertEq(tokenId1, 2, "Token Id should be 2");
@@ -46,13 +46,13 @@ contract Will4USNFTTest is Test {
 
     function test_revert_awardCampaignItem_maxMintablePerClass() public {
         vm.startPrank(deployerAddress);
-        nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
-        nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
-        nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
-        nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
-        nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
+        nftContract.awardCampaignItem(makeAddr("recipient1"), 1);
+        nftContract.awardCampaignItem(makeAddr("recipient1"), 1);
+        nftContract.awardCampaignItem(makeAddr("recipient1"), 1);
+        nftContract.awardCampaignItem(makeAddr("recipient1"), 1);
+        nftContract.awardCampaignItem(makeAddr("recipient1"), 1);
         vm.expectRevert();
-        nftContract.awardCampaignItem(makeAddr("recipient1"), "https://placeholder.com/1", 1);
+        nftContract.awardCampaignItem(makeAddr("recipient1"), 1);
 
         vm.stopPrank();
     }
@@ -63,13 +63,11 @@ contract Will4USNFTTest is Test {
         recipients[0] = makeAddr("recipient1");
         recipients[1] = makeAddr("recipient2");
         string[] memory tokenURIs = new string[](2);
-        tokenURIs[0] = "https://placeholder.com/1";
-        tokenURIs[1] = "https://placeholder.com/2";
         uint256[] memory classIds = new uint256[](2);
         classIds[0] = 1;
         classIds[1] = 1;
 
-        nftContract.batchAwardCampaignItem(recipients, tokenURIs, classIds);
+        nftContract.batchAwardCampaignItem(recipients, classIds);
 
         vm.stopPrank();
     }
@@ -78,16 +76,16 @@ contract Will4USNFTTest is Test {
         vm.startPrank(deployerAddress);
         vm.expectEmit(true, true, true, true);
         emit TokenMetadataUpdated(
-            deployerAddress, 1, 1, "https://pharo.mypinata.cloud/ipfs/QmSnzdnhtCuJ6yztHmtYFT7eU2hFF17QNM6rsNohFn6csg/"
+            deployerAddress, 1, 1, "https://pharo.mypinata.cloud/ipfs/QmSnzdnhtCuJ6yztHmtYFT7eU2hFF17QNM6rsNohFn6csg/2/1.json"
         );
         nftContract.updateTokenMetadata(
-            1, 1, "https://pharo.mypinata.cloud/ipfs/QmSnzdnhtCuJ6yztHmtYFT7eU2hFF17QNM6rsNohFn6csg/"
+            1, 1, "2/1.json"
         );
 
         vm.stopPrank();
         assertEq(
             nftContract.tokenURI(1),
-            "https://pharo.mypinata.cloud/ipfs/QmSnzdnhtCuJ6yztHmtYFT7eU2hFF17QNM6rsNohFn6csg/1/1.json"
+            "https://pharo.mypinata.cloud/ipfs/QmSnzdnhtCuJ6yztHmtYFT7eU2hFF17QNM6rsNohFn6csg/2/1.json"
         );
     }
 

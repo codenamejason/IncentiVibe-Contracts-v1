@@ -122,10 +122,9 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      * @notice Awards campaign nft to supporter
      * @dev This function is only callable by campaign members
      * @param _recipient The recipient of the item
-     * @param _tokenURI The token uri
      * @param _classId The class ID
      */
-    function awardCampaignItem(address _recipient, string memory _tokenURI, uint256 _classId)
+    function awardCampaignItem(address _recipient, uint256 _classId)
         external
         onlyCampaingnMember(msg.sender)
         returns (uint256)
@@ -134,7 +133,7 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
             revert MaxMintablePerClassReached(_recipient, _classId, maxMintablePerClass);
         }
 
-        uint256 tokenId = _mintCampaingnItem(_recipient, _tokenURI, _classId);
+        uint256 tokenId = _mintCampaingnItem(_recipient, _classId);
         mintedPerClass[_recipient][_classId]++;
 
         emit ItemAwarded(tokenId, _recipient, _classId);
@@ -146,12 +145,10 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      * @notice Awards campaign nft to a batch of supporters
      * @dev This function is only callable by campaign members
      * @param _recipients The recipients of the item
-     * @param _tokenURIs The token uris
      * @param _classIds The class IDs
      */
     function batchAwardCampaignItem(
         address[] memory _recipients,
-        string[] memory _tokenURIs,
         uint256[] memory _classIds
     ) external onlyCampaingnMember(msg.sender) returns (uint256[] memory) {
         uint256 length = _recipients.length;
@@ -162,7 +159,7 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
                 revert("You have reached the max mintable for this class");
             }
 
-            tokenIds[i] = _mintCampaingnItem(_recipients[i], _tokenURIs[i], _classIds[i]);
+            tokenIds[i] = _mintCampaingnItem(_recipients[i], _classIds[i]);
             mintedPerClass[_recipients[i]][_classIds[i]]++;
 
             emit ItemAwarded(tokenIds[i], _recipients[i], _classIds[i]);
@@ -200,20 +197,37 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
     }
 
     /**
-     * @notice Updates the token metadata
-     * @dev This function is only callable by campaign members
-     * @param _tokenId The token ID to update
-     * @param _tokenURI The new token uri
+     * @notice Returns all classes
      */
-    function updateTokenMetadata(uint256 _classId, uint256 _tokenId, string memory _tokenURI)
+    function getAllClasses() public view returns (Class[] memory) {
+        Class[] memory _classes = new Class[](classIds);
+
+        for (uint256 i = 0; i < classIds; i++) {
+            _classes[i] = classes[i + 1];
+        }
+
+        return _classes;
+    }
+
+    /**
+     * @notice Updates the token metadata
+     * @dev This function is only callable by campaign members - only use if you really need to
+     * @param _tokenId The token ID to update
+     * @param _classId The class ID
+     * @param _newTokenURI The new token URI 🚨 must be a pointer to a json object 🚨
+     * @return The new token URI
+     */
+    function updateTokenMetadata(uint256 _classId, uint256 _tokenId, string memory _newTokenURI)
         external
-        onlyCampaingnMember(msg.sender)
+        onlyOwner
+        returns (string memory)
     {
         if (super.ownerOf(_tokenId) != address(0)) {
-            string memory uri = getTokenURI(_classId, _tokenId);
-            _setTokenURI(_tokenId, uri);
+            _setTokenURI(_tokenId, _newTokenURI);
 
-            emit TokenMetadataUpdated(msg.sender, _classId, _tokenId, _tokenURI);
+            emit TokenMetadataUpdated(msg.sender, _classId, _tokenId, tokenURI(_tokenId));
+
+            return tokenURI(_tokenId);
         } else {
             revert InvalidTokenId(_tokenId);
         }
@@ -282,16 +296,32 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
         return totalClassesSupply;
     }
 
+    /**
+     * @notice Returns `_baseURI` for the `tokenURI`
+     */
     function _baseURI() internal pure override returns (string memory) {
         // TODO: 🚨 update this when production ready 🚨
         return string.concat("https://pharo.mypinata.cloud/ipfs/QmSnzdnhtCuJ6yztHmtYFT7eU2hFF17QNM6rsNohFn6csg/");
     }
 
+    /**
+     * @notice Returns the `tokenURI`
+     * @param _classId The class ID
+     * @param _tokenId The token ID
+     */
     function getTokenURI(uint256 _classId, uint256 _tokenId) public pure returns (string memory) {
         string memory classId = Strings.toString(_classId);
         string memory tokenId = Strings.toString(_tokenId);
 
         return string.concat(classId, "/", tokenId, ".json");
+    }
+
+    /**
+     * @notice Returns the owner of the token
+     * @param _tokenId The token ID
+     */
+    function getOwnerOfToken(uint256 _tokenId) external view returns (address) {
+        return super.ownerOf(_tokenId);
     }
 
     /**
@@ -301,10 +331,9 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
     /**
      * @notice Mints a new campaign item
      * @param _recipient The recipient of the item
-     * @param _tokenURI The token uri
      * @param _classId The class ID
      */
-    function _mintCampaingnItem(address _recipient, string memory _tokenURI, uint256 _classId)
+    function _mintCampaingnItem(address _recipient, uint256 _classId)
         internal
         returns (uint256)
     {
@@ -314,7 +343,7 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
         classes[_classId].minted++;
 
         _safeMint(_recipient, tokenId);
-        _setTokenURI(tokenId, _tokenURI);
+        _setTokenURI(tokenId, getTokenURI(_classId, tokenId));
 
         return tokenId;
     }

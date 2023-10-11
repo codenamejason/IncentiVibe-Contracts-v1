@@ -14,7 +14,7 @@ contract PersonaAPIConsumer is ChainlinkClient, ConfirmedOwner {
     bytes32 private jobId;
     uint256 private fee;
 
-    mapping(string => bool) public isKYCApproved;
+    mapping(address => bool) public isKYCApproved;
 
     event DataFullfilled(bytes32 requestId, bool isKYCApproved);
 
@@ -64,22 +64,12 @@ contract PersonaAPIConsumer is ChainlinkClient, ConfirmedOwner {
     }
 
     /**
-     * @notice Receives the response in the form of uint256
-     *
-     * @param _requestId - id of the request
-     * @param _isKYCApproved - response; requested KYC data for donors
-     */
-    // function fulfill(bytes32 _requestId, bool _isKYCApproved) public recordChainlinkFulfillment(_requestId) {
-    //     isKYCApproved[""] = _isKYCApproved;
-    //     emit DataFullfilled(_isKYCApproved);
-    // }
-
-    /**
      * Receive the response in the form of uint256
      */
     function fulfill(bytes32 _requestId, bool _isKYCApproved) public recordChainlinkFulfillment(_requestId) {
+        isKYCApproved[address(0)] = _isKYCApproved;
+
         emit DataFullfilled(_requestId, _isKYCApproved);
-        isKYCApproved[""] = _isKYCApproved;
     }
 
     /**
