@@ -4,14 +4,17 @@ pragma solidity 0.8.20;
 import {ERC721URIStorage} from "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import {ERC721} from "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
+import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 /// @notice This contract is the Main NFT contract for the Will 4 US Campaign
 /// @dev This contract is used to mint NFTs for the Will 4 US Campaign
 /// @author @codenamejason <jax@jaxcoder.xyz>
 contract Will4USNFT is ERC721URIStorage, Ownable {
+    using Strings for uint256;
     /**
      * State Variables ********
      */
+
     uint256 private _tokenIds;
     uint256 public classIds;
     uint256 public totalClassesSupply;
@@ -41,7 +44,9 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      * Events ************
      */
     event ItemAwarded(uint256 indexed tokenId, address indexed recipient, uint256 indexed classId);
-    event TokenMetadataUpdated(address indexed sender, uint256 indexed tokenId, string tokenURI);
+    event TokenMetadataUpdated(
+        address indexed sender, uint256 indexed classId, uint256 indexed tokenId, string tokenURI
+    );
     event CampaignMemberAdded(address indexed member);
     event CampaignMemberRemoved(address indexed member);
     event ClassAdded(uint256 indexed classId, string metadata);
@@ -200,11 +205,15 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      * @param _tokenId The token ID to update
      * @param _tokenURI The new token uri
      */
-    function updateTokenMetadata(uint256 _tokenId, string memory _tokenURI) external onlyCampaingnMember(msg.sender) {
+    function updateTokenMetadata(uint256 _classId, uint256 _tokenId, string memory _tokenURI)
+        external
+        onlyCampaingnMember(msg.sender)
+    {
         if (super.ownerOf(_tokenId) != address(0)) {
-            _setTokenURI(_tokenId, _tokenURI);
+            string memory uri = getTokenURI(_classId, _tokenId);
+            _setTokenURI(_tokenId, uri);
 
-            emit TokenMetadataUpdated(msg.sender, _tokenId, _tokenURI);
+            emit TokenMetadataUpdated(msg.sender, _classId, _tokenId, _tokenURI);
         } else {
             revert InvalidTokenId(_tokenId);
         }
@@ -230,8 +239,8 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
 
         // update the total supply
         totalClassesSupply = totalClassesSupply - currentSupply + _supply;
-
         classes[_classId].supply = _supply;
+
         emit UpdatedClassTokenSupply(_classId, _supply);
     }
 
@@ -242,6 +251,7 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      */
     function setMaxMintablePerClass(uint256 _maxMintable) external onlyCampaingnMember(msg.sender) {
         maxMintablePerClass = _maxMintable;
+
         emit UpdatedMaxMintablePerClass(_maxMintable);
     }
 
@@ -272,14 +282,21 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
         return totalClassesSupply;
     }
 
+    function _baseURI() internal pure override returns (string memory) {
+        // TODO: 🚨 update this when production ready 🚨
+        return string.concat("https://pharo.mypinata.cloud/ipfs/QmSnzdnhtCuJ6yztHmtYFT7eU2hFF17QNM6rsNohFn6csg/");
+    }
+
+    function getTokenURI(uint256 _classId, uint256 _tokenId) public pure returns (string memory) {
+        string memory classId = Strings.toString(_classId);
+        string memory tokenId = Strings.toString(_tokenId);
+
+        return string.concat(classId, "/", tokenId, ".json");
+    }
+
     /**
      * Internal Functions ******
      */
-
-    // NOTE: not sure if we can use baseURI for this since each class will have a different baseURI essentially
-    // function _baseURI() internal pure override returns (string memory) {
-    //     return "https://gateway.pinata.cloud/ipfs/hash/classId/tokenId";
-    // }
 
     /**
      * @notice Mints a new campaign item

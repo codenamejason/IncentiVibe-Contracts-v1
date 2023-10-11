@@ -10,7 +10,9 @@ contract Will4USNFTTest is Test {
     address deployerAddress;
 
     event ItemAwarded(uint256 indexed tokenId, address indexed recipient, uint256 indexed classId);
-    event TokenMetadataUpdated(address indexed sender, uint256 indexed tokenId, string tokenURI);
+    event TokenMetadataUpdated(
+        address indexed sender, uint256 indexed classId, uint256 indexed tokenId, string tokenURI
+    );
     event CampaignMemberAdded(address indexed member);
     event CampaignMemberRemoved(address indexed member);
     event ClassAdded(uint256 indexed classId, string metadata);
@@ -75,11 +77,18 @@ contract Will4USNFTTest is Test {
     function test_updateTokenMetadata() public {
         vm.startPrank(deployerAddress);
         vm.expectEmit(true, true, true, true);
-        emit TokenMetadataUpdated(deployerAddress, 1, "https://placeholder.com/1");
-        nftContract.updateTokenMetadata(1, "https://placeholder.com/1");
+        emit TokenMetadataUpdated(
+            deployerAddress, 1, 1, "https://pharo.mypinata.cloud/ipfs/QmSnzdnhtCuJ6yztHmtYFT7eU2hFF17QNM6rsNohFn6csg/"
+        );
+        nftContract.updateTokenMetadata(
+            1, 1, "https://pharo.mypinata.cloud/ipfs/QmSnzdnhtCuJ6yztHmtYFT7eU2hFF17QNM6rsNohFn6csg/"
+        );
 
         vm.stopPrank();
-        assertEq(nftContract.tokenURI(1), "https://placeholder.com/1", "Token URI should be https://placeholder.com/1");
+        assertEq(
+            nftContract.tokenURI(1),
+            "https://pharo.mypinata.cloud/ipfs/QmSnzdnhtCuJ6yztHmtYFT7eU2hFF17QNM6rsNohFn6csg/1/1.json"
+        );
     }
 
     function test_addCampaignMember() public {
