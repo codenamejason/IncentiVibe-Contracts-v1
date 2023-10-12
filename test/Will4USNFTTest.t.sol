@@ -76,11 +76,12 @@ contract Will4USNFTTest is Test {
         vm.startPrank(deployerAddress);
         vm.expectEmit(true, true, true, true);
         emit TokenMetadataUpdated(
-            deployerAddress, 1, 1, "https://pharo.mypinata.cloud/ipfs/QmSnzdnhtCuJ6yztHmtYFT7eU2hFF17QNM6rsNohFn6csg/2/1.json"
+            deployerAddress,
+            1,
+            1,
+            "https://pharo.mypinata.cloud/ipfs/QmSnzdnhtCuJ6yztHmtYFT7eU2hFF17QNM6rsNohFn6csg/2/1.json"
         );
-        nftContract.updateTokenMetadata(
-            1, 1, "2/1.json"
-        );
+        nftContract.updateTokenMetadata(1, 1, "2/1.json");
 
         vm.stopPrank();
         assertEq(

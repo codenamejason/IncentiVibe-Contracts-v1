@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import "@chainlink/src/v0.8/ChainlinkClient.sol";
-import "@chainlink/src/v0.8/ConfirmedOwner.sol";
+import "@chainlink/src/v0.8/shared/access/ConfirmedOwner.sol";
 
 /**
  * @title The PersonaAPIConsumer contract

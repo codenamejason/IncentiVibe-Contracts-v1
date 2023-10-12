@@ -147,10 +147,11 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      * @param _recipients The recipients of the item
      * @param _classIds The class IDs
      */
-    function batchAwardCampaignItem(
-        address[] memory _recipients,
-        uint256[] memory _classIds
-    ) external onlyCampaingnMember(msg.sender) returns (uint256[] memory) {
+    function batchAwardCampaignItem(address[] memory _recipients, uint256[] memory _classIds)
+        external
+        onlyCampaingnMember(msg.sender)
+        returns (uint256[] memory)
+    {
         uint256 length = _recipients.length;
         uint256[] memory tokenIds = new uint256[](length);
 
@@ -333,10 +334,7 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      * @param _recipient The recipient of the item
      * @param _classId The class ID
      */
-    function _mintCampaingnItem(address _recipient, uint256 _classId)
-        internal
-        returns (uint256)
-    {
+    function _mintCampaingnItem(address _recipient, uint256 _classId) internal returns (uint256) {
         uint256 tokenId = ++_tokenIds;
 
         // update the class minted count
