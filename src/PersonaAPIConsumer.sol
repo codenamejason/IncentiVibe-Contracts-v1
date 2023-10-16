@@ -40,7 +40,8 @@ contract PersonaAPIConsumer is ChainlinkClient, ConfirmedOwner {
      */
 
     function requestKYCData() public returns (bytes32 requestId) {
-        Chainlink.Request memory request = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
+        Chainlink.Request memory request =
+            buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
 
         // Set the URL to perform the GET request on
         request.add("get", "set url here");
@@ -66,7 +67,10 @@ contract PersonaAPIConsumer is ChainlinkClient, ConfirmedOwner {
     /**
      * Receive the response in the form of uint256
      */
-    function fulfill(bytes32 _requestId, bool _isKYCApproved) public recordChainlinkFulfillment(_requestId) {
+    function fulfill(bytes32 _requestId, bool _isKYCApproved)
+        public
+        recordChainlinkFulfillment(_requestId)
+    {
         isKYCApproved[address(0)] = _isKYCApproved;
 
         emit DataFullfilled(_requestId, _isKYCApproved);

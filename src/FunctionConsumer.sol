@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import {FunctionsClient} from "@chainlink/src/v0.8/functions/dev/1_0_0/FunctionsClient.sol";
-import {ConfirmedOwner} from "@chainlink/src/v0.8/shared/access/ConfirmedOwner.sol";
-import {FunctionsRequest} from "@chainlink/src/v0.8/functions/dev/1_0_0/libraries/FunctionsRequest.sol";
+import { FunctionsClient } from "@chainlink/src/v0.8/functions/dev/1_0_0/FunctionsClient.sol";
+import { ConfirmedOwner } from "@chainlink/src/v0.8/shared/access/ConfirmedOwner.sol";
+import { FunctionsRequest } from
+    "@chainlink/src/v0.8/functions/dev/1_0_0/libraries/FunctionsRequest.sol";
 
 /**
  * THIS IS AN EXAMPLE CONTRACT THAT USES HARDCODED VALUES FOR CLARITY.
@@ -21,7 +22,7 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
 
     event Response(bytes32 indexed requestId, bytes response, bytes err);
 
-    constructor(address router) FunctionsClient(router) ConfirmedOwner(msg.sender) {}
+    constructor(address router) FunctionsClient(router) ConfirmedOwner(msg.sender) { }
 
     /**
      * @notice Send a simple request
@@ -65,11 +66,12 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
      * @param jobId ID of the job to be invoked
      * @return requestId The ID of the sent request
      */
-    function sendRequestCBOR(bytes memory request, uint64 subscriptionId, uint32 gasLimit, bytes32 jobId)
-        external
-        onlyOwner
-        returns (bytes32 requestId)
-    {
+    function sendRequestCBOR(
+        bytes memory request,
+        uint64 subscriptionId,
+        uint32 gasLimit,
+        bytes32 jobId
+    ) external onlyOwner returns (bytes32 requestId) {
         s_lastRequestId = _sendRequest(request, subscriptionId, gasLimit, jobId);
         return s_lastRequestId;
     }
@@ -81,7 +83,10 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
      * @param err Aggregated error from the user code or from the execution pipeline
      * Either response or error parameter will be set, but never both
      */
-    function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
+    function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err)
+        internal
+        override
+    {
         if (s_lastRequestId != requestId) {
             revert UnexpectedRequestID(requestId);
         }

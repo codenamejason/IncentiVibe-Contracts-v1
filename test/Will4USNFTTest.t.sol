@@ -1,13 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import {Test, console2} from "forge-std/Test.sol";
-import {Will4USNFT} from "../src/Will4USNFT.sol";
+import { Test, console2, StdUtils } from "forge-std/Test.sol";
+import { Will4USNFT } from "../src/Will4USNFT.sol";
 
 /// @notice This contract is used to test the Will4USNFT contract
 contract Will4USNFTTest is Test {
     Will4USNFT public nftContract;
     address deployerAddress;
+
+    error InvalidTokenId(uint256 tokenId);
+    error MaxMintablePerClassReached(address recipient, uint256 classId, uint256 maxMintable);
+    error AlreadyRedeemed(address redeemer, uint256 tokenId);
+    error Unauthorized(address sender);
+    error NewSupplyTooLow(uint256 minted, uint256 supply);
 
     event ItemAwarded(uint256 indexed tokenId, address indexed recipient, uint256 indexed classId);
     event TokenMetadataUpdated(
@@ -16,6 +22,7 @@ contract Will4USNFTTest is Test {
     event CampaignMemberAdded(address indexed member);
     event CampaignMemberRemoved(address indexed member);
     event ClassAdded(uint256 indexed classId, string metadata);
+    event Redeemed(address indexed redeemer, uint256 indexed tokenId, uint256 indexed classId);
 
     function setUp() public {
         deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
@@ -23,7 +30,9 @@ contract Will4USNFTTest is Test {
 
         vm.startPrank(deployerAddress);
         nftContract.addCampaignMember(deployerAddress);
-        nftContract.addClass("name", "description", "imagePointer", "https://a_new_pointer_to_json_object.io", 1e7);
+        nftContract.addClass(
+            "name", "description", "imagePointer", "https://a_new_pointer_to_json_object.io", 1e7
+        );
         nftContract.awardCampaignItem(makeAddr("recipient1"), 1);
         vm.stopPrank();
     }
@@ -104,20 +113,66 @@ contract Will4USNFTTest is Test {
         vm.startPrank(deployerAddress);
         vm.expectEmit(true, true, true, true);
         emit CampaignMemberRemoved(makeAddr("member1"));
-        nftContract.removeCampaignMember(makeAddr("member1"));
 
+        nftContract.removeCampaignMember(makeAddr("member1"));
         vm.stopPrank();
-        assertEq(nftContract.campaignMembers(makeAddr("member1")), false, "Member should be removed");
+        assertEq(
+            nftContract.campaignMembers(makeAddr("member1")), false, "Member should be removed"
+        );
+    }
+
+    function test_redeem() public {
+        vm.startPrank(deployerAddress);
+        vm.expectEmit(true, true, true, true);
+        emit Redeemed(deployerAddress, 1, 1);
+
+        nftContract.redeem(1, deployerAddress);
+    }
+
+    function test_revert_redeem_AlreadyRedeemed() public {
+        vm.startPrank(deployerAddress);
+        nftContract.redeem(1, deployerAddress);
+        vm.expectRevert();
+
+        nftContract.redeem(1, deployerAddress);
+        vm.stopPrank();
+    }
+
+    function test_revert_redeem_Unauthorized() public {
+        vm.startPrank(makeAddr("chad"));
+        vm.expectRevert();
+
+        nftContract.redeem(1, deployerAddress);
+        vm.stopPrank();
     }
 
     function test_addClass() public {
         vm.startPrank(deployerAddress);
         vm.expectEmit(true, true, true, true);
         emit ClassAdded(2, "https://a_new_pointer_to_json_object.io");
-        nftContract.addClass("name2", "description", "imagePointer", "https://a_new_pointer_to_json_object.io", 1e7);
+        nftContract.addClass(
+            "name2", "description", "imagePointer", "https://a_new_pointer_to_json_object.io", 1e7
+        );
 
         vm.stopPrank();
-        assertEq(nftContract.getClassById(2).name, "name2", "Class name should be name");
+        (
+            uint256 id,
+            uint256 supply,
+            uint256 minted,
+            string memory name,
+            string memory description,
+            string memory imagePointer,
+            string memory metadataPointer
+        ) = nftContract.classes(2);
+        assertEq(name, "name2", "Class name should be name");
+    }
+
+    function test_revert_addClass_Unauthorized() public {
+        vm.prank(makeAddr("chad"));
+        vm.expectRevert();
+        nftContract.addClass(
+            "name2", "description", "imagePointer", "https://a_new_pointer_to_json_object.io", 1e7
+        );
     }
 
     function test_getTotalSupplyForClass() public {
@@ -128,7 +183,35 @@ contract Will4USNFTTest is Test {
         vm.prank(deployerAddress);
         nftContract.setClassTokenSupply(1, 1e10);
 
-        assertEq(nftContract.getClassById(1).supply, 1e10, "Total supply should be 1e10");
+        (
+            uint256 id,
+            uint256 supply,
+            uint256 minted,
+            string memory name,
+            string memory description,
+            string memory imagePointer,
+            string memory metadataPointer
+        ) = nftContract.classes(1);
+        assertEq(supply, 1e10, "Total supply should be 1e10");
+    }
+
+    function test_revert_setClassTokenSupply_NewSupplyTooLow() public {
+        vm.startPrank(deployerAddress);
+        nftContract.setClassTokenSupply(1, 10);
+        nftContract.awardCampaignItem(makeAddr("recipient1"), 1);
+        nftContract.awardCampaignItem(makeAddr("recipient2"), 1);
+        nftContract.awardCampaignItem(makeAddr("recipient3"), 1);
+        nftContract.awardCampaignItem(makeAddr("recipient4"), 1);
+        nftContract.awardCampaignItem(makeAddr("recipient5"), 1);
+        vm.expectRevert();
+        nftContract.setClassTokenSupply(1, 5);
+        vm.stopPrank();
+    }
+
+    function test_revert_setClassTokenSupply_Unauthorized() public {
+        vm.prank(makeAddr("chad"));
+        vm.expectRevert();
+        nftContract.setClassTokenSupply(1, 1e10);
     }
 
     function test_getTotalSupplyForAllClasses() public {
@@ -140,5 +223,11 @@ contract Will4USNFTTest is Test {
         nftContract.setMaxMintablePerClass(10);
 
         assertEq(nftContract.maxMintablePerClass(), 10, "Total supply should be 1e10");
+    }
+
+    function test_revert_setMaxMintablePerClass_Unauthorized() public {
+        vm.prank(makeAddr("chad"));
+        vm.expectRevert();
+        nftContract.setMaxMintablePerClass(10);
     }
 }

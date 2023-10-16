@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.20;
 
-import {ERC721URIStorage} from "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import {ERC721} from "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
-import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
-import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
+import { ERC721URIStorage } from
+    "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import { ERC721 } from "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
+import { Ownable } from "openzeppelin-contracts/contracts/access/Ownable.sol";
+import { Strings } from "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 /// @notice This contract is the Main NFT contract for the Will 4 US Campaign
 /// @dev This contract is used to mint NFTs for the Will 4 US Campaign
@@ -23,6 +24,7 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
     mapping(uint256 => Class) public classes;
     mapping(address => bool) public campaignMembers;
     mapping(address => mapping(uint256 => uint256)) public mintedPerClass;
+    mapping(address => mapping(uint256 => bool)) public redeemed;
 
     struct Class {
         uint256 id;
@@ -39,6 +41,9 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      */
     error InvalidTokenId(uint256 tokenId);
     error MaxMintablePerClassReached(address recipient, uint256 classId, uint256 maxMintable);
+    error AlreadyRedeemed(address redeemer, uint256 tokenId);
+    error Unauthorized(address sender);
+    error NewSupplyTooLow(uint256 minted, uint256 supply);
 
     /**
      * Events ************
@@ -52,6 +57,7 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
     event ClassAdded(uint256 indexed classId, string metadata);
     event UpdatedClassTokenSupply(uint256 indexed classId, uint256 supply);
     event UpdatedMaxMintablePerClass(uint256 maxMintable);
+    event Redeemed(address indexed redeemer, uint256 indexed tokenId, uint256 indexed classId);
 
     /**
      * Modifiers ************
@@ -63,7 +69,9 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      * @param sender The sender address
      */
     modifier onlyCampaingnMember(address sender) {
-        require(campaignMembers[sender], "Only campaign members can call this function");
+        if (!campaignMembers[sender]) {
+            revert Unauthorized(sender);
+        }
         _;
     }
 
@@ -174,6 +182,26 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
     }
 
     /**
+     * @notice Redeems a campaign item
+     * @dev This function is only callable by campaign members
+     * @param _tokenId The token ID
+     * @param _redeemer The owner/redeemer of the token
+     */
+    function redeem(uint256 _tokenId, address _redeemer) external onlyCampaingnMember(msg.sender) {
+        if (super.ownerOf(_tokenId) == address(0)) {
+            revert InvalidTokenId(_tokenId);
+        }
+
+        if (redeemed[_redeemer][_tokenId]) {
+            revert AlreadyRedeemed(_redeemer, _tokenId);
+        }
+
+        redeemed[_redeemer][_tokenId] = true;
+
+        emit Redeemed(_redeemer, _tokenId, classes[_tokenId].id);
+    }
+
+    /**
      * @notice Adds a new class to the campaign for issuance
      * @dev This function is only callable by campaign members
      * @param _name The name of the class
@@ -240,7 +268,10 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      * @param _classId The class ID
      * @param _supply The new supply
      */
-    function setClassTokenSupply(uint256 _classId, uint256 _supply) external onlyCampaingnMember(msg.sender) {
+    function setClassTokenSupply(uint256 _classId, uint256 _supply)
+        external
+        onlyCampaingnMember(msg.sender)
+    {
         uint256 currentSupply = classes[_classId].supply;
         uint256 minted = classes[_classId].minted;
 
@@ -248,7 +279,7 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
             // if the new supply is less than the current supply, we need to check if the new supply is less than the minted
             // if it is, then we need to revert
             if (_supply < minted) {
-                revert("The new supply cannot be less than the minted");
+                revert NewSupplyTooLow(minted, _supply);
             }
         }
 
@@ -264,7 +295,10 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      * @dev This function is only callable by campaign members
      * @param _maxMintable The new max mintable
      */
-    function setMaxMintablePerClass(uint256 _maxMintable) external onlyCampaingnMember(msg.sender) {
+    function setMaxMintablePerClass(uint256 _maxMintable)
+        external
+        onlyCampaingnMember(msg.sender)
+    {
         maxMintablePerClass = _maxMintable;
 
         emit UpdatedMaxMintablePerClass(_maxMintable);
@@ -273,14 +307,6 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
     /**
      * View Functions ******
      */
-
-    /**
-     * @notice Returns the class
-     * @param _id The class ID
-     */
-    function getClassById(uint256 _id) external view returns (Class memory) {
-        return classes[_id];
-    }
 
     /**
      * @notice Returns the total supply for a class
@@ -302,7 +328,9 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      */
     function _baseURI() internal pure override returns (string memory) {
         // TODO: 🚨 update this when production ready 🚨
-        return string.concat("https://pharo.mypinata.cloud/ipfs/QmSnzdnhtCuJ6yztHmtYFT7eU2hFF17QNM6rsNohFn6csg/");
+        return string.concat(
+            "https://pharo.mypinata.cloud/ipfs/QmSnzdnhtCuJ6yztHmtYFT7eU2hFF17QNM6rsNohFn6csg/"
+        );
     }
 
     /**
@@ -350,9 +378,21 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      * Overrides
      */
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721URIStorage) returns (bool) {}
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC721URIStorage)
+        returns (bool)
+    { }
 
-    function tokenURI(uint256 tokenId) public view virtual override(ERC721URIStorage) returns (string memory) {
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        virtual
+        override(ERC721URIStorage)
+        returns (string memory)
+    {
         return super.tokenURI(tokenId);
     }
 }
