@@ -20,15 +20,15 @@ contract Will4USNFTDeployTest is Test {
     function setUp() public {
         deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
         nftContract = new Will4USNFT(deployerAddress, 5);
-
-        vm.startPrank(deployerAddress);
-        nftContract.addCampaignMember(deployerAddress);
-        nftContract.addClass(
-            "name", "description", "imagePointer", "https://a_new_pointer_to_json_object.io", 1e7
-        );
-        nftContract.awardCampaignItem(makeAddr("recipient1"), 1);
-        vm.stopPrank();
+        string memory url = vm.rpcUrl("arbitrumGoerli");
+        assertEq(url, "https://arb-goerli.g.alchemy.com/v2/RqTiyvS7OspxaAQUQupKKCTjmf94JL-I");
     }
 
     // todo: test that the contract is deployed with the correct parameters
+    function test_deploy() public {
+        assertEq(nftContract.maxMintablePerClass(), 5, "maxMintablePerClass should be 5");
+        assertEq(nftContract.totalClassesSupply(), 0, "totalSupply should be 0");
+        assertEq(nftContract.balanceOf(deployerAddress), 0, "balanceOf should be 0");
+        assertEq(nftContract.owner(), deployerAddress, "owner should be deployerAddress");
+    }
 }

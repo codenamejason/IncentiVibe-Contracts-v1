@@ -183,15 +183,7 @@ contract Will4USNFTTest is Test {
         vm.prank(deployerAddress);
         nftContract.setClassTokenSupply(1, 1e10);
 
-        (
-            uint256 id,
-            uint256 supply,
-            uint256 minted,
-            string memory name,
-            string memory description,
-            string memory imagePointer,
-            string memory metadataPointer
-        ) = nftContract.classes(1);
+        (, uint256 supply,,,,,) = nftContract.classes(1);
         assertEq(supply, 1e10, "Total supply should be 1e10");
     }
 
