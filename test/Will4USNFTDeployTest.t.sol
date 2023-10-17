@@ -9,7 +9,7 @@ contract Will4USNFTDeployTest is Test {
     Will4USNFT public nftContract;
     address deployerAddress;
 
-    bytes32 constant DEFAULT_ADMIN_ROLE = keccak256("DEFAULT_ADMIN_ROLE");
+    bytes32 public constant DEFAULT_ADMIN_ROLE = keccak256("DEFAULT_ADMIN_ROLE");
 
     event ItemAwarded(uint256 indexed tokenId, address indexed recipient, uint256 indexed classId);
     event TokenMetadataUpdated(
@@ -32,7 +32,7 @@ contract Will4USNFTDeployTest is Test {
         assertEq(nftContract.totalClassesSupply(), 0, "totalSupply should be 0");
         assertEq(nftContract.balanceOf(deployerAddress), 0, "balanceOf should be 0");
         assertEq(
-            nftContract.hasRole(DEFAULT_ADMIN_ROLE, deployerAddress),
+            nftContract.hasRole(nftContract.getRoleAdmin(DEFAULT_ADMIN_ROLE), deployerAddress),
             true,
             "default admin should be deployerAddress"
         );
