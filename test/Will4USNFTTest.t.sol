@@ -26,7 +26,7 @@ contract Will4USNFTTest is Test {
 
     function setUp() public {
         deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
-        nftContract = new Will4USNFT(deployerAddress, 5);
+        nftContract = new Will4USNFT(deployerAddress, deployerAddress, deployerAddress, 5);
 
         vm.startPrank(deployerAddress);
         nftContract.addCampaignMember(deployerAddress);

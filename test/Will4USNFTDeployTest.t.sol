@@ -9,6 +9,8 @@ contract Will4USNFTDeployTest is Test {
     Will4USNFT public nftContract;
     address deployerAddress;
 
+    bytes32 constant DEFAULT_ADMIN_ROLE = keccak256("DEFAULT_ADMIN_ROLE");
+
     event ItemAwarded(uint256 indexed tokenId, address indexed recipient, uint256 indexed classId);
     event TokenMetadataUpdated(
         address indexed sender, uint256 indexed classId, uint256 indexed tokenId, string tokenURI
@@ -19,7 +21,7 @@ contract Will4USNFTDeployTest is Test {
 
     function setUp() public {
         deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
-        nftContract = new Will4USNFT(deployerAddress, 5);
+        nftContract = new Will4USNFT(deployerAddress, deployerAddress, deployerAddress, 5);
         string memory url = vm.rpcUrl("arbitrumGoerli");
         assertEq(url, "https://arb-goerli.g.alchemy.com/v2/RqTiyvS7OspxaAQUQupKKCTjmf94JL-I");
     }
@@ -29,6 +31,10 @@ contract Will4USNFTDeployTest is Test {
         assertEq(nftContract.maxMintablePerClass(), 5, "maxMintablePerClass should be 5");
         assertEq(nftContract.totalClassesSupply(), 0, "totalSupply should be 0");
         assertEq(nftContract.balanceOf(deployerAddress), 0, "balanceOf should be 0");
-        assertEq(nftContract.owner(), deployerAddress, "owner should be deployerAddress");
+        assertEq(
+            nftContract.hasRole(DEFAULT_ADMIN_ROLE, deployerAddress),
+            true,
+            "default admin should be deployerAddress"
+        );
     }
 }

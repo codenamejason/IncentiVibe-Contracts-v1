@@ -5,16 +5,20 @@ import { ERC721URIStorage } from
     "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import { ERC721 } from "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import { Ownable } from "openzeppelin-contracts/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import { Strings } from "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 /// @notice This contract is the Main NFT contract for the Will 4 US Campaign
 /// @dev This contract is used to mint NFTs for the Will 4 US Campaign
 /// @author @codenamejason <jax@jaxcoder.xyz>
-contract Will4USNFT is ERC721URIStorage, Ownable {
+contract Will4USNFT is ERC721URIStorage, AccessControl {
     using Strings for uint256;
     /**
      * State Variables ********
      */
+
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     uint256 private _tokenIds;
     uint256 public classIds;
@@ -78,17 +82,17 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
     /**
      * Constructor *********
      */
-    constructor(address owner, uint256 _maxMintablePerClass)
+    constructor(address defaultAdmin, address minter, address pauser, uint256 _maxMintablePerClass)
         ERC721("Will 4 US NFT Collection", "WILL4USNFT")
-        Ownable(owner)
     {
         // add the owner to the campaign members
-        _addCampaignMember(owner);
+        _addCampaignMember(defaultAdmin);
+
+        _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
+        _grantRole(PAUSER_ROLE, minter);
+        _grantRole(MINTER_ROLE, pauser);
 
         maxMintablePerClass = _maxMintablePerClass;
-
-        // set the owner address
-        _transferOwnership(owner);
     }
 
     /**
@@ -100,7 +104,7 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      * @dev This function is only callable by the owner
      * @param _member The member to add
      */
-    function addCampaignMember(address _member) external onlyOwner {
+    function addCampaignMember(address _member) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _addCampaignMember(_member);
     }
 
@@ -120,7 +124,7 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      * @dev This function is only callable by the owner
      * @param _member The member to remove
      */
-    function removeCampaignMember(address _member) external onlyOwner {
+    function removeCampaignMember(address _member) external onlyRole(DEFAULT_ADMIN_ROLE) {
         campaignMembers[_member] = false;
 
         emit CampaignMemberRemoved(_member);
@@ -248,7 +252,7 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
      */
     function updateTokenMetadata(uint256 _classId, uint256 _tokenId, string memory _newTokenURI)
         external
-        onlyOwner
+        onlyRole(DEFAULT_ADMIN_ROLE)
         returns (string memory)
     {
         if (super.ownerOf(_tokenId) != address(0)) {
@@ -382,7 +386,7 @@ contract Will4USNFT is ERC721URIStorage, Ownable {
         public
         view
         virtual
-        override(ERC721URIStorage)
+        override(AccessControl, ERC721URIStorage)
         returns (bool)
     { }
 
