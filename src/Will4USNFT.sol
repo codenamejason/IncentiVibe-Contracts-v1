@@ -4,8 +4,7 @@ pragma solidity 0.8.20;
 import { ERC721URIStorage } from
     "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import { ERC721 } from "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
-import { Ownable } from "openzeppelin-contracts/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { Strings } from "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 /// @notice This contract is the Main NFT contract for the Will 4 US Campaign
@@ -56,8 +55,6 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
     event TokenMetadataUpdated(
         address indexed sender, uint256 indexed classId, uint256 indexed tokenId, string tokenURI
     );
-    event CampaignMemberAdded(address indexed member);
-    event CampaignMemberRemoved(address indexed member);
     event ClassAdded(uint256 indexed classId, string metadata);
     event UpdatedClassTokenSupply(uint256 indexed classId, uint256 supply);
     event UpdatedMaxMintablePerClass(uint256 maxMintable);
@@ -73,7 +70,7 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      * @param sender The sender address
      */
     modifier onlyCampaingnMember(address sender) {
-        if (!campaignMembers[sender]) {
+        if (!hasRole(MINTER_ROLE, sender)) {
             revert Unauthorized(sender);
         }
         _;
@@ -82,17 +79,20 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
     /**
      * Constructor *********
      */
-    constructor(address defaultAdmin, address minter, address pauser, uint256 _maxMintablePerClass)
-        ERC721("Will 4 US NFT Collection", "WILL4USNFT")
-    {
+    constructor(
+        address _defaultAdmin,
+        address _minter,
+        address _pauser,
+        uint256 _maxMintablePerClass
+    ) ERC721("Will 4 US NFT Collection", "WILL4USNFT") {
         // add the owner to the campaign members
-        _addCampaignMember(defaultAdmin);
+        _addCampaignMember(_defaultAdmin);
 
-        _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
-        _grantRole(PAUSER_ROLE, minter);
-        _grantRole(MINTER_ROLE, pauser);
+        _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
+        _grantRole(PAUSER_ROLE, _pauser);
+        _grantRole(MINTER_ROLE, _minter);
 
-        maxMintablePerClass = _maxMintablePerClass;
+        _setMaxMintablePerClass(_maxMintablePerClass);
     }
 
     /**
@@ -114,9 +114,7 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      * @param _member The member to add
      */
     function _addCampaignMember(address _member) internal {
-        campaignMembers[_member] = true;
-
-        emit CampaignMemberAdded(_member);
+        _grantRole(MINTER_ROLE, _member);
     }
 
     /**
@@ -125,9 +123,7 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      * @param _member The member to remove
      */
     function removeCampaignMember(address _member) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        campaignMembers[_member] = false;
-
-        emit CampaignMemberRemoved(_member);
+        revokeRole(MINTER_ROLE, _member);
     }
 
     /**
@@ -303,9 +299,7 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
         external
         onlyCampaingnMember(msg.sender)
     {
-        maxMintablePerClass = _maxMintable;
-
-        emit UpdatedMaxMintablePerClass(_maxMintable);
+        _setMaxMintablePerClass(_maxMintable);
     }
 
     /**
@@ -360,6 +354,16 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
     /**
      * Internal Functions ******
      */
+
+    /**
+     * @notice Sets the max mintable per wallet
+     * @dev Intenral function to set the max mintable per wallet
+     * @param _maxMintable The new max mintable
+     */
+    function _setMaxMintablePerClass(uint256 _maxMintable) internal {
+        maxMintablePerClass = _maxMintable;
+        emit UpdatedMaxMintablePerClass(_maxMintable);
+    }
 
     /**
      * @notice Mints a new campaign item
