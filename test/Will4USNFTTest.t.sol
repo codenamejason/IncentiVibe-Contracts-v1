@@ -6,6 +6,10 @@ import { Will4USNFT } from "../src/Will4USNFT.sol";
 
 /// @notice This contract is used to test the Will4USNFT contract
 contract Will4USNFTTest is Test {
+    bytes32 public constant DEFAULT_ADMIN_ROLE = keccak256("DEFAULT_ADMIN_ROLE");
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+
     Will4USNFT public nftContract;
     address deployerAddress;
 
@@ -22,7 +26,8 @@ contract Will4USNFTTest is Test {
     event CampaignMemberAdded(address indexed member);
     event CampaignMemberRemoved(address indexed member);
     event ClassAdded(uint256 indexed classId, string metadata);
-    event Redeemed(address indexed redeemer, uint256 indexed tokenId, uint256 indexed classId);
+    event Redeemed(uint256 indexed eventId, uint256 indexed tokenId, uint256 indexed classId);
+    event RoleGranted(bytes32 indexed role, address indexed account, address sender);
 
     function setUp() public {
         deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
@@ -101,40 +106,42 @@ contract Will4USNFTTest is Test {
 
     function test_addCampaignMember() public {
         vm.startPrank(deployerAddress);
-        vm.expectEmit(true, true, true, true);
-        emit CampaignMemberAdded(makeAddr("member1"));
         nftContract.addCampaignMember(makeAddr("member1"));
 
         vm.stopPrank();
-        assertEq(nftContract.campaignMembers(makeAddr("member1")), true, "Member should be added");
+        assertEq(
+            nftContract.hasRole(MINTER_ROLE, makeAddr("member1")),
+            true,
+            "Member should have MINTER_ROLE"
+        );
     }
 
     function test_removeCampaignMember() public {
         vm.startPrank(deployerAddress);
-        vm.expectEmit(true, true, true, true);
-        emit CampaignMemberRemoved(makeAddr("member1"));
 
         nftContract.removeCampaignMember(makeAddr("member1"));
         vm.stopPrank();
         assertEq(
-            nftContract.campaignMembers(makeAddr("member1")), false, "Member should be removed"
+            nftContract.hasRole(MINTER_ROLE, makeAddr("member1")),
+            false,
+            "Member should NOT have MINTER_ROLE"
         );
     }
 
     function test_redeem() public {
         vm.startPrank(deployerAddress);
         vm.expectEmit(true, true, true, true);
-        emit Redeemed(deployerAddress, 1, 1);
+        emit Redeemed(1, 1, 1);
 
-        nftContract.redeem(1, deployerAddress);
+        nftContract.redeem(1, 1);
     }
 
     function test_revert_redeem_AlreadyRedeemed() public {
         vm.startPrank(deployerAddress);
-        nftContract.redeem(1, deployerAddress);
+        nftContract.redeem(1, 1);
         vm.expectRevert();
 
-        nftContract.redeem(1, deployerAddress);
+        nftContract.redeem(1, 1);
         vm.stopPrank();
     }
 
@@ -142,7 +149,7 @@ contract Will4USNFTTest is Test {
         vm.startPrank(makeAddr("chad"));
         vm.expectRevert();
 
-        nftContract.redeem(1, deployerAddress);
+        nftContract.redeem(1, 1);
         vm.stopPrank();
     }
 
