@@ -27,4 +27,48 @@ contract Will4USTokenTest is Test {
             "default admin should be deployerAddress"
         );
     }
+
+    function test_mint() public {
+        vm.startPrank(deployerAddress);
+        // vm.expectEmit(true, true, true, true);
+        // emit Transfer(address(0), makeAddr("recipient1"), 10e18);
+        tokenContract.mint(makeAddr("recipient1"), 10e18);
+        vm.stopPrank();
+
+        assertEq(tokenContract.totalSupply(), 10e18, "totalSupply should be 100");
+        assertEq(tokenContract.balanceOf(makeAddr("recipient1")), 10e18, "balanceOf should be 100");
+    }
+
+    function test_pause() public {
+        vm.startPrank(deployerAddress);
+        // vm.expectEmit(true, true, true, true);
+        // emit Paused(deployerAddress);
+        tokenContract.pause();
+        vm.stopPrank();
+
+        assertEq(tokenContract.paused(), true, "paused should be true");
+    }
+
+    function test_unpause() public {
+        vm.startPrank(deployerAddress);
+        // vm.expectEmit(true, true, true, true);
+        // emit Unpaused(deployerAddress);
+        tokenContract.pause();
+        tokenContract.unpause();
+        vm.stopPrank();
+
+        assertEq(tokenContract.paused(), false, "paused should be false");
+    }
+
+    function test_burn() public {
+        vm.startPrank(deployerAddress);
+        // vm.expectEmit(true, true, true, true);
+        // emit Transfer(deployerAddress, address(0), 10e18);
+        tokenContract.mint(deployerAddress, 10e18);
+        tokenContract.burn(10e18);
+        vm.stopPrank();
+
+        assertEq(tokenContract.totalSupply(), 0, "totalSupply should be 0");
+        assertEq(tokenContract.balanceOf(deployerAddress), 0, "balanceOf should be 0");
+    }
 }
