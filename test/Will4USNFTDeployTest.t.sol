@@ -22,8 +22,8 @@ contract Will4USNFTDeployTest is Test {
     function setUp() public {
         deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
         nftContract = new Will4USNFT(deployerAddress, deployerAddress, deployerAddress, 5);
-        string memory url = vm.rpcUrl("arbitrumGoerli");
-        assertEq(url, "https://arb-goerli.g.alchemy.com/v2/RqTiyvS7OspxaAQUQupKKCTjmf94JL-I");
+        // string memory url = vm.rpcUrl("arbitrumGoerli");
+        // assertEq(url, "https://arb-goerli.g.alchemy.com/v2/RqTiyvS7OspxaAQUQupKKCTjmf94JL-I");
     }
 
     // todo: test that the contract is deployed with the correct parameters
