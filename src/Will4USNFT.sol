@@ -4,8 +4,7 @@ pragma solidity 0.8.20;
 import { ERC721URIStorage } from
     "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import { ERC721 } from "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
-import { Ownable } from "openzeppelin-contracts/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { Strings } from "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 /// @notice This contract is the Main NFT contract for the Will 4 US Campaign
@@ -28,7 +27,8 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
     mapping(uint256 => Class) public classes;
     mapping(address => bool) public campaignMembers;
     mapping(address => mapping(uint256 => uint256)) public mintedPerClass;
-    mapping(address => mapping(uint256 => bool)) public redeemed;
+    // eventId => token => bool
+    mapping(uint256 => mapping(uint256 => bool)) public redeemed;
 
     struct Class {
         uint256 id;
@@ -45,7 +45,7 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      */
     error InvalidTokenId(uint256 tokenId);
     error MaxMintablePerClassReached(address recipient, uint256 classId, uint256 maxMintable);
-    error AlreadyRedeemed(address redeemer, uint256 tokenId);
+    error AlreadyRedeemed(uint256 eventId, uint256 tokenId);
     error Unauthorized(address sender);
     error NewSupplyTooLow(uint256 minted, uint256 supply);
 
@@ -56,12 +56,10 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
     event TokenMetadataUpdated(
         address indexed sender, uint256 indexed classId, uint256 indexed tokenId, string tokenURI
     );
-    event CampaignMemberAdded(address indexed member);
-    event CampaignMemberRemoved(address indexed member);
     event ClassAdded(uint256 indexed classId, string metadata);
     event UpdatedClassTokenSupply(uint256 indexed classId, uint256 supply);
     event UpdatedMaxMintablePerClass(uint256 maxMintable);
-    event Redeemed(address indexed redeemer, uint256 indexed tokenId, uint256 indexed classId);
+    event Redeemed(uint256 indexed eventId, uint256 indexed tokenId, uint256 indexed classId);
 
     /**
      * Modifiers ************
@@ -73,7 +71,7 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      * @param sender The sender address
      */
     modifier onlyCampaingnMember(address sender) {
-        if (!campaignMembers[sender]) {
+        if (!hasRole(MINTER_ROLE, sender)) {
             revert Unauthorized(sender);
         }
         _;
@@ -82,17 +80,20 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
     /**
      * Constructor *********
      */
-    constructor(address defaultAdmin, address minter, address pauser, uint256 _maxMintablePerClass)
-        ERC721("Will 4 US NFT Collection", "WILL4USNFT")
-    {
+    constructor(
+        address _defaultAdmin,
+        address _minter,
+        address _pauser,
+        uint256 _maxMintablePerClass
+    ) ERC721("Will 4 US NFT Collection", "WILL4USNFT") {
         // add the owner to the campaign members
-        _addCampaignMember(defaultAdmin);
+        _addCampaignMember(_defaultAdmin);
 
-        _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
-        _grantRole(PAUSER_ROLE, minter);
-        _grantRole(MINTER_ROLE, pauser);
+        _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
+        _grantRole(PAUSER_ROLE, _pauser);
+        _grantRole(MINTER_ROLE, _minter);
 
-        maxMintablePerClass = _maxMintablePerClass;
+        _setMaxMintablePerClass(_maxMintablePerClass);
     }
 
     /**
@@ -114,9 +115,7 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      * @param _member The member to add
      */
     function _addCampaignMember(address _member) internal {
-        campaignMembers[_member] = true;
-
-        emit CampaignMemberAdded(_member);
+        _grantRole(MINTER_ROLE, _member);
     }
 
     /**
@@ -125,9 +124,7 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      * @param _member The member to remove
      */
     function removeCampaignMember(address _member) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        campaignMembers[_member] = false;
-
-        emit CampaignMemberRemoved(_member);
+        revokeRole(MINTER_ROLE, _member);
     }
 
     /**
@@ -188,21 +185,21 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
     /**
      * @notice Redeems a campaign item
      * @dev This function is only callable by campaign members
+     * @param _eventId The event ID
      * @param _tokenId The token ID
-     * @param _redeemer The owner/redeemer of the token
      */
-    function redeem(uint256 _tokenId, address _redeemer) external onlyCampaingnMember(msg.sender) {
+    function redeem(uint256 _eventId, uint256 _tokenId) external onlyCampaingnMember(msg.sender) {
         if (super.ownerOf(_tokenId) == address(0)) {
             revert InvalidTokenId(_tokenId);
         }
 
-        if (redeemed[_redeemer][_tokenId]) {
-            revert AlreadyRedeemed(_redeemer, _tokenId);
+        if (redeemed[_eventId][_tokenId]) {
+            revert AlreadyRedeemed(_eventId, _tokenId);
         }
 
-        redeemed[_redeemer][_tokenId] = true;
+        redeemed[_eventId][_tokenId] = true;
 
-        emit Redeemed(_redeemer, _tokenId, classes[_tokenId].id);
+        emit Redeemed(_eventId, _tokenId, classes[_tokenId].id);
     }
 
     /**
@@ -303,14 +300,23 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
         external
         onlyCampaingnMember(msg.sender)
     {
-        maxMintablePerClass = _maxMintable;
-
-        emit UpdatedMaxMintablePerClass(_maxMintable);
+        _setMaxMintablePerClass(_maxMintable);
     }
 
     /**
      * View Functions ******
      */
+
+    /**
+     * @notice Returns if the token has been redeemed for an event
+     * @param _eventId The event ID
+     * @param _tokenId The token ID
+     * @return bool Returns true if the token has been redeemed
+     */
+
+    function getRedeemed(uint256 _eventId, uint256 _tokenId) external view returns (bool) {
+        return redeemed[_eventId][_tokenId];
+    }
 
     /**
      * @notice Returns the total supply for a class
@@ -360,6 +366,16 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
     /**
      * Internal Functions ******
      */
+
+    /**
+     * @notice Sets the max mintable per wallet
+     * @dev Intenral function to set the max mintable per wallet
+     * @param _maxMintable The new max mintable
+     */
+    function _setMaxMintablePerClass(uint256 _maxMintable) internal {
+        maxMintablePerClass = _maxMintable;
+        emit UpdatedMaxMintablePerClass(_maxMintable);
+    }
 
     /**
      * @notice Mints a new campaign item
