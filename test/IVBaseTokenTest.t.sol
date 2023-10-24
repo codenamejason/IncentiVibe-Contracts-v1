@@ -13,12 +13,13 @@ contract IVBaseTokenTest is Test {
 
     function setUp() public {
         deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
-        tokenContract = new IVBaseToken(deployerAddress, deployerAddress, deployerAddress);
+        tokenContract =
+            new IVBaseToken(deployerAddress, deployerAddress, deployerAddress, "TestToken", "TST");
     }
 
     function test_deploy() public {
-        assertEq(tokenContract.name(), "IVBaseToken", "name should be IVBaseToken");
-        assertEq(tokenContract.symbol(), "W4US", "symbol should be W4US");
+        assertEq(tokenContract.name(), "TestToken", "name should be TestToken");
+        assertEq(tokenContract.symbol(), "TST", "symbol should be TST");
         assertEq(tokenContract.totalSupply(), 0, "totalSupply should be 0");
         assertEq(tokenContract.balanceOf(deployerAddress), 0, "balanceOf should be 0");
         assertEq(

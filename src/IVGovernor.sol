@@ -9,7 +9,10 @@ import "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
 
-contract Will4USGovernor is
+/// @title IVGovernor
+/// @notice This is the governor contract used for IV Projects.
+/// @author @codenamejason <jax@jaxcoder.xyz>
+contract IVGovernor is
     Governor,
     GovernorSettings,
     GovernorCountingSimple,
@@ -19,7 +22,7 @@ contract Will4USGovernor is
     GovernorTimelockControl
 {
     constructor(IVotes _token, TimelockController _timelock)
-        Governor("Will4USGovernor")
+        Governor("IVGovernor")
         GovernorSettings(7200, /* 1 day */ 50400, /* 1 week */ 0)
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(4)

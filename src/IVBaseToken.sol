@@ -8,6 +8,10 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
+/// @title IVBaseToken
+/// @notice This is the base token contract used for the IVToken contracts.
+/// @dev This contract is used to deploy the projects ERC20 token contracts.
+/// @author @codenamejason <jax@jaxcoder.xyz>
 contract IVBaseToken is
     ERC20,
     ERC20Burnable,
@@ -35,10 +39,13 @@ contract IVBaseToken is
         _;
     }
 
-    constructor(address defaultAdmin, address minter, address pauser)
-        ERC20("Will4USToken", "W4US")
-        ERC20Permit("Will4USToken")
-    {
+    constructor(
+        address defaultAdmin,
+        address minter,
+        address pauser,
+        string memory name,
+        string memory symbol
+    ) ERC20(name, symbol) ERC20Permit(name) {
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(MINTER_ROLE, minter);
         _grantRole(PAUSER_ROLE, pauser);
