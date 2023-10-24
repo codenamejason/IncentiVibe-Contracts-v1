@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract Will4USToken is
+contract IVBaseToken is
     ERC20,
     ERC20Burnable,
     ERC20Pausable,
@@ -67,5 +67,13 @@ contract Will4USToken is
 
     function nonces(address owner) public view override(ERC20Permit, Nonces) returns (uint256) {
         return super.nonces(owner);
+    }
+
+    function transfer(address, uint256) public pure override(ERC20) returns (bool) {
+        revert("Transfer is disabled");
+    }
+
+    function transferFrom(address, address, uint256) public pure override(ERC20) returns (bool) {
+        revert("Transfer is disabled");
     }
 }
