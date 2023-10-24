@@ -2,13 +2,13 @@
 pragma solidity 0.8.20;
 
 // External
-import { IVBaseToken } from "./IVBaseToken.sol";
+import { IVBaseERC20Token } from "./IVBaseERC20Token.sol";
 
 /// @title IVTokenContractFactory
 /// @author @codenamejason <jax@jaxcoder.xyz>
 /// @dev IVTokenContractFactory is used to deploy the projects ERC20 token contracts. Please
 ///      see the README for more information.
-contract IVTokenContractFactory {
+contract IVERC20TokenContractFactory {
     /// ======================
     /// ======= Errors =======
     /// ======================
@@ -89,7 +89,7 @@ contract IVTokenContractFactory {
         string memory _name,
         string memory _symbol
     ) external payable onlyDeployer returns (address deployedContract) {
-        deployedContract = address(new IVBaseToken(_defaultAdmin, _minter, _pauser, _name, _symbol));
+        deployedContract = address(new IVBaseERC20Token(_defaultAdmin, _minter, _pauser, _name, _symbol));
 
         // Set the token to the deployedTokens mapping
         deployedTokens[deployedContract] = Token({

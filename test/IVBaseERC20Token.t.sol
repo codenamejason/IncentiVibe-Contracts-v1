@@ -3,10 +3,10 @@ pragma solidity 0.8.20;
 
 import { Test, console2, StdUtils } from "forge-std/Test.sol";
 
-import { IVBaseToken } from "../src/IVBaseToken.sol";
+import { IVBaseERC20Token } from "../src/IVBaseERC20Token.sol";
 
-contract IVBaseTokenTest is Test {
-    IVBaseToken public tokenContract;
+contract IVBaseERC20TokenTest is Test {
+    IVBaseERC20Token public tokenContract;
     address deployerAddress;
 
     bytes32 public constant DEFAULT_ADMIN_ROLE = keccak256("DEFAULT_ADMIN_ROLE");
@@ -14,7 +14,7 @@ contract IVBaseTokenTest is Test {
     function setUp() public {
         deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
         tokenContract =
-            new IVBaseToken(deployerAddress, deployerAddress, deployerAddress, "TestToken", "TST");
+            new IVBaseERC20Token(deployerAddress, deployerAddress, deployerAddress, "TestToken", "TST");
     }
 
     function test_deploy() public {

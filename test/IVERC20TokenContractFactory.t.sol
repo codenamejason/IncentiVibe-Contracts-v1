@@ -2,20 +2,20 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 
-import { IVTokenContractFactory } from "../src/IVTokenContractFactory.sol";
+import { IVERC20TokenContractFactory } from "../src/IVERC20TokenContractFactory.sol";
 import { MockIVToken } from "./utils/MockIVToken.sol";
-import { IVBaseToken } from "../src/IVBaseToken.sol";
+import { IVBaseERC20Token } from "../src/IVBaseERC20Token.sol";
 
-contract IVTokenContractFactoryTest is Test {
-    IVTokenContractFactory factoryInstance;
+contract IVERC20TokenContractFactoryTest is Test {
+    IVERC20TokenContractFactory factoryInstance;
     address public deployerAddress;
-    IVBaseToken public ivBaseToken;
+    IVBaseERC20Token public ivBaseToken;
 
     uint256 private _nonces;
 
     function setUp() public {
         deployerAddress = makeAddr("deployerAddress");
-        factoryInstance = new IVTokenContractFactory();
+        factoryInstance = new IVERC20TokenContractFactory();
         factoryInstance.setDeployer(deployerAddress, true);
 
         _nonces = 0;
@@ -39,7 +39,7 @@ contract IVTokenContractFactoryTest is Test {
     }
 
     function testRevert_deploy_UNAUTHORIZED() public {
-        vm.expectRevert(IVTokenContractFactory.UNAUTHORIZED.selector);
+        vm.expectRevert(IVERC20TokenContractFactory.UNAUTHORIZED.selector);
         vm.prank(makeAddr("alice"));
         factoryInstance.deploy(
             deployerAddress, deployerAddress, deployerAddress, "TestToken", "TST"
@@ -57,7 +57,7 @@ contract IVTokenContractFactoryTest is Test {
     function testRevert_setDeployer_UNAUTHORIZED() public {
         address newContractFactoryAddress = makeAddr("bob");
 
-        vm.expectRevert(IVTokenContractFactory.UNAUTHORIZED.selector);
+        vm.expectRevert(IVERC20TokenContractFactory.UNAUTHORIZED.selector);
         vm.prank(makeAddr("alice"));
         factoryInstance.setDeployer(newContractFactoryAddress, true);
     }

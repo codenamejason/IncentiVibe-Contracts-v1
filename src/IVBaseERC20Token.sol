@@ -8,11 +8,11 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
-/// @title IVBaseToken
+/// @title IVBaseERC20Token
 /// @notice This is the base token contract used for the IVToken contracts.
 /// @dev This contract is used to deploy the projects ERC20 token contracts.
 /// @author @codenamejason <jax@jaxcoder.xyz>
-contract IVBaseToken is
+contract IVBaseERC20Token is
     ERC20,
     ERC20Burnable,
     ERC20Pausable,
