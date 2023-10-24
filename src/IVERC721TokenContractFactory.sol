@@ -78,8 +78,9 @@ contract IVERC721TokenContractFactory {
         string memory _name,
         string memory _symbol
     ) external payable onlyDeployer returns (address deployedContract) {
-        deployedContract =
-            address(new IVERC721BaseToken(_defaultAdmin, _minter, _pauser, _name, _symbol));
+        deployedContract = address(
+            new IVERC721BaseToken(_defaultAdmin, _minter, _pauser, _name, _symbol)
+        );
 
         // Set the token to the deployedTokens mapping
         deployedTokens[deployedContract] = Token({

@@ -2,13 +2,13 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 
-import { IVERC20TokenContractFactory } from "../src/IVERC20TokenContractFactory.sol";
-import { MockIVERC20Token } from "./mocks/MockIVERC20Token.sol";
+import { IVERC721TokenContractFactory } from "../src/IVERC721TokenContractFactory.sol";
+import { MockIVERC721Token } from "./mocks/MockIVERC721Token.sol";
 import { IVERC20BaseToken } from "../src/IVERC20BaseToken.sol";
 import { Errors } from "../src/library/Errors.sol";
 
-contract IVERC20TokenContractFactoryTest is Test {
-    IVERC20TokenContractFactory factoryInstance;
+contract IVERC721TokenContractFactoryTest is Test {
+    IVERC721TokenContractFactory factoryInstance;
     address public deployerAddress;
     IVERC20BaseToken public ivBaseToken;
 
@@ -16,7 +16,7 @@ contract IVERC20TokenContractFactoryTest is Test {
 
     function setUp() public {
         deployerAddress = makeAddr("deployerAddress");
-        factoryInstance = new IVERC20TokenContractFactory();
+        factoryInstance = new IVERC721TokenContractFactory();
         factoryInstance.setDeployer(deployerAddress, true);
 
         _nonces = 0;
@@ -28,14 +28,15 @@ contract IVERC20TokenContractFactoryTest is Test {
     }
 
     function test_deploy_shit() public {
+        vm.startPrank(deployerAddress);
         address deployedAddress = factoryInstance.create(
             deployerAddress, deployerAddress, deployerAddress, "TestToken", "TST"
         );
 
         assertNotEq(deployedAddress, address(0));
-        vm.startPrank(deployerAddress);
-        MockIVERC20Token(deployedAddress).mint(deployerAddress, 100e18);
-        assertEq(MockIVERC20Token(deployedAddress).balanceOf(deployerAddress), 100e18);
+
+        MockIVERC721Token(deployedAddress).awardCampaignItem(deployerAddress, 1);
+        assertEq(MockIVERC721Token(deployedAddress).balanceOf(deployerAddress), 1);
         vm.stopPrank();
     }
 

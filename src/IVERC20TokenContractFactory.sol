@@ -75,7 +75,7 @@ contract IVERC20TokenContractFactory {
     /// @param _name Name of the token
     /// @param _symbol Symbol of the token
     /// @return deployedContract Address of the deployed contract
-    function deploy(
+    function create(
         address _defaultAdmin,
         address _minter,
         address _pauser,
