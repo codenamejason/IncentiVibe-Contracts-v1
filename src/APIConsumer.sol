@@ -5,10 +5,10 @@ import "@chainlink/src/v0.8/ChainlinkClient.sol";
 import "@chainlink/src/v0.8/shared/access/ConfirmedOwner.sol";
 
 /**
- * @title The PersonaAPIConsumer contract
- * @notice An API Consumer contract that makes GET requests to obtain KYC data
+ * @title The APIConsumer contract
+ * @notice An API Consumer contract that makes GET requests
  */
-contract PersonaAPIConsumer is ChainlinkClient, ConfirmedOwner {
+contract APIConsumer is ChainlinkClient, ConfirmedOwner {
     using Chainlink for Chainlink.Request;
 
     bytes32 private jobId;

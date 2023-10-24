@@ -1,14 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.20;
 
-import { IVERC20BaseToken } from "./IVERC20BaseToken.sol";
+import { IVERC721BaseToken } from "./IVERC721BaseToken.sol";
 import { Errors } from "./library/Errors.sol";
 
-/// @title IVTokenContractFactory
-/// @author @codenamejason <jax@jaxcoder.xyz>
-/// @dev IVTokenContractFactory is used to deploy the projects ERC20 token contracts. Please
-///      see the README for more information.
-contract IVERC20TokenContractFactory {
+contract IVERC721TokenContractFactory {
     /// ======================
     /// ======= Events =======
     /// ======================
@@ -75,7 +71,7 @@ contract IVERC20TokenContractFactory {
     /// @param _name Name of the token
     /// @param _symbol Symbol of the token
     /// @return deployedContract Address of the deployed contract
-    function deploy(
+    function create(
         address _defaultAdmin,
         address _minter,
         address _pauser,
@@ -83,7 +79,7 @@ contract IVERC20TokenContractFactory {
         string memory _symbol
     ) external payable onlyDeployer returns (address deployedContract) {
         deployedContract =
-            address(new IVERC20BaseToken(_defaultAdmin, _minter, _pauser, _name, _symbol));
+            address(new IVERC721BaseToken(_defaultAdmin, _minter, _pauser, _name, _symbol));
 
         // Set the token to the deployedTokens mapping
         deployedTokens[deployedContract] = Token({

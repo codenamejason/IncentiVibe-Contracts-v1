@@ -3,10 +3,10 @@ pragma solidity 0.8.20;
 
 import { Test, console2, StdUtils } from "forge-std/Test.sol";
 
-import { IVBaseERC20Token } from "../src/IVBaseERC20Token.sol";
+import { IVERC20BaseToken } from "../src/IVERC20BaseToken.sol";
 
-contract IVBaseERC20TokenTest is Test {
-    IVBaseERC20Token public tokenContract;
+contract IVERC20BaseTokenTest is Test {
+    IVERC20BaseToken public tokenContract;
     address deployerAddress;
 
     bytes32 public constant DEFAULT_ADMIN_ROLE = keccak256("DEFAULT_ADMIN_ROLE");
@@ -14,7 +14,7 @@ contract IVBaseERC20TokenTest is Test {
     function setUp() public {
         deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
         tokenContract =
-            new IVBaseERC20Token(deployerAddress, deployerAddress, deployerAddress, "TestToken", "TST");
+        new IVERC20BaseToken(deployerAddress, deployerAddress, deployerAddress, "TestToken", "TST");
     }
 
     function test_deploy() public {
@@ -31,8 +31,6 @@ contract IVBaseERC20TokenTest is Test {
 
     function test_mint() public {
         vm.startPrank(deployerAddress);
-        // vm.expectEmit(true, true, true, true);
-        // emit Transfer(address(0), makeAddr("recipient1"), 10e18);
         tokenContract.mint(makeAddr("recipient1"), 10e18);
         vm.stopPrank();
 
@@ -49,8 +47,6 @@ contract IVBaseERC20TokenTest is Test {
 
     function test_pause() public {
         vm.startPrank(deployerAddress);
-        // vm.expectEmit(true, true, true, true);
-        // emit Paused(deployerAddress);
         tokenContract.pause();
         vm.stopPrank();
 
@@ -66,8 +62,6 @@ contract IVBaseERC20TokenTest is Test {
 
     function test_unpause() public {
         vm.startPrank(deployerAddress);
-        // vm.expectEmit(true, true, true, true);
-        // emit Unpaused(deployerAddress);
         tokenContract.pause();
         tokenContract.unpause();
         vm.stopPrank();
@@ -87,8 +81,6 @@ contract IVBaseERC20TokenTest is Test {
 
     function test_burn() public {
         vm.startPrank(deployerAddress);
-        // vm.expectEmit(true, true, true, true);
-        // emit Transfer(deployerAddress, address(0), 10e18);
         tokenContract.mint(deployerAddress, 10e18);
         tokenContract.burn(10e18);
         vm.stopPrank();
