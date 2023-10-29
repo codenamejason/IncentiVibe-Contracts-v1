@@ -92,6 +92,8 @@ contract IVERC721TokenContractFactory {
         });
 
         emit Deployed(deployedContract);
+
+        return deployedContract;
     }
 
     /// @notice Set the allowed deployer.

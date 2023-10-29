@@ -32,7 +32,7 @@ contract IVERC721BaseTokenTest is Test {
         tokenContract.addClass(
             "Volunteer", "Test volunteer class", "https://yourpointer", "", 500000
         );
-        tokenContract.awardCampaignItem(makeAddr("recipient1"), 1);
+        tokenContract.awardItem(makeAddr("recipient1"), 1);
         vm.stopPrank();
 
         assertEq(tokenContract.totalSupply(), 1, "totalSupply should be 1");

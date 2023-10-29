@@ -35,7 +35,7 @@ contract IVERC721TokenContractFactoryTest is Test {
 
         assertNotEq(deployedAddress, address(0));
 
-        MockIVERC721Token(deployedAddress).awardCampaignItem(deployerAddress, 1);
+        MockIVERC721Token(deployedAddress).awardItem(deployerAddress, 1);
         assertEq(MockIVERC721Token(deployedAddress).balanceOf(deployerAddress), 1);
         vm.stopPrank();
     }

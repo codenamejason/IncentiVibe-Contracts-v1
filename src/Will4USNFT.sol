@@ -29,8 +29,8 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
     mapping(uint256 => Class) public classes;
     mapping(address => bool) public campaignMembers;
     mapping(address => mapping(uint256 => uint256)) public mintedPerClass;
-    // eventId => token => bool
-    mapping(uint256 => mapping(uint256 => bool)) public redeemed;
+    // occurrenceId => token => bool
+    mapping(bytes32 => mapping(uint256 => bool)) public redeemed;
 
     struct Class {
         uint256 id;
@@ -52,7 +52,7 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
     event ClassAdded(uint256 indexed classId, string metadata);
     event UpdatedClassTokenSupply(uint256 indexed classId, uint256 supply);
     event UpdatedMaxMintablePerClass(uint256 maxMintable);
-    event Redeemed(uint256 indexed eventId, uint256 indexed tokenId, uint256 indexed classId);
+    event Redeemed(bytes32 indexed occurrenceId, uint256 indexed tokenId, uint256 indexed classId);
 
     /**
      * Modifiers ************
@@ -178,21 +178,21 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
     /**
      * @notice Redeems a campaign item
      * @dev This function is only callable by campaign members
-     * @param _eventId The event ID
+     * @param _occurrenceId The occurrence ID
      * @param _tokenId The token ID
      */
-    function redeem(uint256 _eventId, uint256 _tokenId) external onlyCampaingnMember(msg.sender) {
+    function redeem(bytes32 _occurrenceId, uint256 _tokenId) external onlyCampaingnMember(msg.sender) {
         if (super.ownerOf(_tokenId) == address(0)) {
             revert Errors.InvalidTokenId(_tokenId);
         }
 
-        if (redeemed[_eventId][_tokenId]) {
-            revert Errors.AlreadyRedeemed(_eventId, _tokenId);
+        if (redeemed[_occurrenceId][_tokenId]) {
+            revert Errors.AlreadyRedeemed(_occurrenceId, _tokenId);
         }
 
-        redeemed[_eventId][_tokenId] = true;
+        redeemed[_occurrenceId][_tokenId] = true;
 
-        emit Redeemed(_eventId, _tokenId, classes[_tokenId].id);
+        emit Redeemed(_occurrenceId, _tokenId, classes[_tokenId].id);
     }
 
     /**
@@ -301,14 +301,14 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      */
 
     /**
-     * @notice Returns if the token has been redeemed for an event
-     * @param _eventId The event ID
+     * @notice Returns if the token has been redeemed for an occurrence
+     * @param _occurrenceId The occurrence ID
      * @param _tokenId The token ID
      * @return bool Returns true if the token has been redeemed
      */
 
-    function getRedeemed(uint256 _eventId, uint256 _tokenId) external view returns (bool) {
-        return redeemed[_eventId][_tokenId];
+    function getRedeemed(bytes32 _occurrenceId, uint256 _tokenId) external view returns (bool) {
+        return redeemed[_occurrenceId][_tokenId];
     }
 
     /**

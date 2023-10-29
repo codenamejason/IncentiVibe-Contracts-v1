@@ -26,7 +26,7 @@ contract Will4USNFTTest is Test {
     event CampaignMemberAdded(address indexed member);
     event CampaignMemberRemoved(address indexed member);
     event ClassAdded(uint256 indexed classId, string metadata);
-    event Redeemed(uint256 indexed eventId, uint256 indexed tokenId, uint256 indexed classId);
+    event Redeemed(bytes32 indexed occurrenceId, uint256 indexed tokenId, uint256 indexed classId);
     event RoleGranted(bytes32 indexed role, address indexed account, address sender);
 
     function setUp() public {
@@ -131,17 +131,17 @@ contract Will4USNFTTest is Test {
     function test_redeem() public {
         vm.startPrank(deployerAddress);
         vm.expectEmit(true, true, true, true);
-        emit Redeemed(1, 1, 1);
+        emit Redeemed("0x01", 1, 1);
 
-        nftContract.redeem(1, 1);
+        nftContract.redeem("0x01", 1);
     }
 
     function test_revert_redeem_AlreadyRedeemed() public {
         vm.startPrank(deployerAddress);
-        nftContract.redeem(1, 1);
+        nftContract.redeem("0x01", 1);
         vm.expectRevert();
 
-        nftContract.redeem(1, 1);
+        nftContract.redeem("0x01", 1);
         vm.stopPrank();
     }
 
@@ -149,7 +149,7 @@ contract Will4USNFTTest is Test {
         vm.startPrank(makeAddr("chad"));
         vm.expectRevert();
 
-        nftContract.redeem(1, 1);
+        nftContract.redeem("0x01", 1);
         vm.stopPrank();
     }
 

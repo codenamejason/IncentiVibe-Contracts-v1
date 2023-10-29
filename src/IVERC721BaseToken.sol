@@ -12,8 +12,10 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Votes.sol";
 
 import { Errors } from "./library/Errors.sol";
 import { Structs } from "./library/Structs.sol";
+import { RedemtionModule } from "./RedemtionModule.sol";
 
 contract IVERC721BaseToken is
+    RedemtionModule,
     ERC721,
     ERC721Enumerable,
     ERC721URIStorage,
@@ -31,11 +33,8 @@ contract IVERC721BaseToken is
     uint256 public maxMintablePerClass;
 
     mapping(uint256 => Structs.Class) public classes;
-    mapping(address => bool) public campaignMembers;
     mapping(address => mapping(uint256 => uint256)) public mintedPerClass;
-    // eventId => token => bool
-    mapping(uint256 => mapping(uint256 => bool)) public redeemed;
-
+    
     /**
      * Events ************
      */
@@ -46,7 +45,6 @@ contract IVERC721BaseToken is
     event ClassAdded(uint256 indexed classId, string metadata);
     event UpdatedClassTokenSupply(uint256 indexed classId, uint256 supply);
     event UpdatedMaxMintablePerClass(uint256 maxMintable);
-    event Redeemed(uint256 indexed eventId, uint256 indexed tokenId, uint256 indexed classId);
 
     /**
      * Modifiers ************
@@ -81,12 +79,12 @@ contract IVERC721BaseToken is
      */
 
     /**
-     * @notice Awards campaign nft to supporter
-     * @dev This function is only callable by campaign members
+     * @notice Awards nft to address
+     * @dev This function is only callable by staff
      * @param _recipient The recipient of the item
      * @param _classId The class ID
      */
-    function awardCampaignItem(address _recipient, uint256 _classId)
+    function awardItem(address _recipient, uint256 _classId)
         external
         onlyMinter(msg.sender)
         returns (uint256)
@@ -95,7 +93,7 @@ contract IVERC721BaseToken is
             revert Errors.MaxMintablePerClassReached(_recipient, _classId, maxMintablePerClass);
         }
 
-        uint256 tokenId = _mintCampaingnItem(_recipient, _classId);
+        uint256 tokenId = _mintItem(_recipient, _classId);
         mintedPerClass[_recipient][_classId]++;
 
         emit ItemAwarded(tokenId, _recipient, _classId);
@@ -104,12 +102,12 @@ contract IVERC721BaseToken is
     }
 
     /**
-     * @notice Awards campaign nft to a batch of supporters
-     * @dev This function is only callable by campaign members
+     * @notice Awards nft to a batch of addresses
+     * @dev This function is only callable by staff
      * @param _recipients The recipients of the item
      * @param _classIds The class IDs
      */
-    function batchAwardCampaignItem(address[] memory _recipients, uint256[] memory _classIds)
+    function batchAwardItem(address[] memory _recipients, uint256[] memory _classIds)
         external
         onlyMinter(msg.sender)
         returns (uint256[] memory)
@@ -122,7 +120,7 @@ contract IVERC721BaseToken is
                 revert("You have reached the max mintable for this class");
             }
 
-            tokenIds[i] = _mintCampaingnItem(_recipients[i], _classIds[i]);
+            tokenIds[i] = _mintItem(_recipients[i], _classIds[i]);
             mintedPerClass[_recipients[i]][_classIds[i]]++;
 
             emit ItemAwarded(tokenIds[i], _recipients[i], _classIds[i]);
@@ -136,8 +134,8 @@ contract IVERC721BaseToken is
     }
 
     /**
-     * @notice Adds a new class to the campaign for issuance
-     * @dev This function is only callable by campaign members
+     * @notice Adds a new class
+     * @dev This function is only callable by staff
      * @param _name The name of the class
      * @param _description The description of the class
      * @param _imagePointer The image pointer for the class
@@ -174,7 +172,7 @@ contract IVERC721BaseToken is
 
     /**
      * @notice Updates the token metadata
-     * @dev This function is only callable by campaign members - only use if you really need to
+     * @dev This function is only callable by staff - only use if you really need to
      * @param _tokenId The token ID to update
      * @param _classId The class ID
      * @param _newTokenURI The new token URI 🚨 must be a pointer to a json object 🚨
@@ -198,7 +196,7 @@ contract IVERC721BaseToken is
 
     /**
      * @notice Sets the class token supply
-     * @dev This function is only callable by campaign members
+     * @dev This function is only callable by staff
      * @param _classId The class ID
      * @param _supply The new supply
      */
@@ -227,17 +225,6 @@ contract IVERC721BaseToken is
     /**
      * View Functions ******
      */
-
-    /**
-     * @notice Returns if the token has been redeemed for an event
-     * @param _eventId The event ID
-     * @param _tokenId The token ID
-     * @return bool Returns true if the token has been redeemed
-     */
-
-    function getRedeemed(uint256 _eventId, uint256 _tokenId) external view returns (bool) {
-        return redeemed[_eventId][_tokenId];
-    }
 
     /**
      * @notice Returns the total supply for a class
@@ -293,7 +280,7 @@ contract IVERC721BaseToken is
      * @param _recipient The recipient of the item
      * @param _classId The class ID
      */
-    function _mintCampaingnItem(address _recipient, uint256 _classId) internal returns (uint256) {
+    function _mintItem(address _recipient, uint256 _classId) internal returns (uint256) {
         uint256 tokenId = ++_tokenIds;
 
         // update the class minted count
