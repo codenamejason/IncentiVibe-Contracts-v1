@@ -9,6 +9,7 @@ import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol"
 
 contract IVStaffManager is AccessControl {
     bytes32 public constant STAFF_ROLE = keccak256("STAFF_ROLE");
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     mapping(address => Structs.Staff) public staff;
 
@@ -75,5 +76,18 @@ contract IVStaffManager is AccessControl {
         _staff.status = _status;
 
         staff[_staff.member] = _staff;
+    }
+
+    function addStaffMemberMinterRole(address _member) external onlyAdmin {
+        _grantRole(MINTER_ROLE, _member);
+    }
+
+    /**
+     * @notice Removes a campaign member
+     * @dev This function is only callable by the owner
+     * @param _member The member to remove
+     */
+    function removeCampaignMember(address _member) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        revokeRole(MINTER_ROLE, _member);
     }
 }

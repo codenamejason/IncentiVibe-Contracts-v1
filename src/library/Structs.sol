@@ -34,5 +34,16 @@ library Structs {
         Enums.Status status;
         address[] staff;
         Metadata metadata;
+        address[] attendees;
+    }
+
+    struct Class {
+        uint256 id;
+        uint256 supply; // total supply of this class? do we want this?
+        uint256 minted;
+        string name;
+        string description;
+        string imagePointer;
+        string metadata; // this is a pointer to json object that contains the metadata for this class
     }
 }

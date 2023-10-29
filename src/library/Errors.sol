@@ -8,4 +8,5 @@ library Errors {
     error AlreadyRedeemed(uint256 eventId, uint256 tokenId);
     error NewSupplyTooLow(uint256 minted, uint256 supply);
     error OccurrenceDoesNotExist(bytes32 occurrenceId);
+    error NotCreator(address caller);
 }

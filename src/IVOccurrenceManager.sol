@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { IVStaffManager } from "./IVStaffManager.sol";
+import { IIVOccurrenceManager } from "./interfaces/IIVOccurrenceManager.sol";
 import { Enums } from "./library/Enums.sol";
 import { Structs } from "./library/Structs.sol";
 import { Errors } from "./library/Errors.sol";
@@ -14,14 +15,23 @@ import { Errors } from "./library/Errors.sol";
  * @dev We use the term occurrence to describe an event, appointment, or any other type of gathering.
  * @author @codenamejason <jax@jaxdoder.xyz>
  */
-contract IVOccurrenceManager is IVStaffManager {
+contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
     bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
 
     mapping(bytes32 => Structs.Occurrence) public occurrences;
     uint256 private _occurrenceCount;
 
     modifier onlyCreator() {
-        require(hasRole(CREATOR_ROLE, msg.sender), "IVOccurrenceManager: caller is not a creator");
+        if (!hasRole(CREATOR_ROLE, msg.sender)) {
+            revert Errors.NotCreator(msg.sender);
+        }
+        _;
+    }
+
+    modifier occurrenceExists(bytes32 _occurenceIdId) {
+        if (occurrences[_occurenceIdId].id != _occurenceIdId) {
+            revert Errors.OccurrenceDoesNotExist(_occurenceIdId);
+        }
         _;
     }
 
@@ -51,28 +61,12 @@ contract IVOccurrenceManager is IVStaffManager {
         address[] memory _staff,
         Structs.Metadata memory _metadata
     ) external returns (bytes32) {
-        Structs.Occurrence memory _occurenceId = Structs.Occurrence({
-            id: keccak256(abi.encodePacked(_name, _start, _end)),
-            creator: msg.sender,
-            name: _name,
-            description: _description,
-            start: _start,
-            end: _end,
-            price: _price,
-            token: _token,
-            status: Enums.Status.Pending,
-            staff: _staff,
-            metadata: _metadata
-        });
-
-        occurrences[_occurenceId.id] = _occurenceId;
-        _occurrenceCount++;
-
-        return _occurenceId.id;
+        return
+            _createOccurrence(_name, _description, _start, _end, _price, _token, _staff, _metadata);
     }
 
     function updateOccurrence(
-        bytes32 _occurenceIdId,
+        bytes32 _occurenceId,
         string memory _name,
         string memory _description,
         uint256 _start,
@@ -81,64 +75,52 @@ contract IVOccurrenceManager is IVStaffManager {
         address _token,
         address[] memory _staff,
         Structs.Metadata memory _metadata
-    ) external onlyCreator {
-        require(
-            occurrences[_occurenceIdId].id == _occurenceIdId,
-            "IVOccurrenceManager: occurrence does not exist"
+    ) external onlyCreator occurrenceExists(_occurenceId) {
+        return _updateOccurrence(
+            _occurenceId, _name, _description, _start, _end, _price, _token, _staff, _metadata
         );
-
-        Structs.Occurrence memory _occurenceId = Structs.Occurrence({
-            id: keccak256(abi.encodePacked(_name, _start, _end)),
-            creator: msg.sender,
-            name: _name,
-            description: _description,
-            start: _start,
-            end: _end,
-            price: _price,
-            token: _token,
-            status: Enums.Status.Pending,
-            staff: _staff,
-            metadata: _metadata
-        });
-
-        occurrences[_occurenceId.id] = _occurenceId;
     }
 
-    function getOccurrence(bytes32 _occurenceIdId)
+    function getOccurrence(bytes32 _occurenceId)
         external
         view
+        occurrenceExists(_occurenceId)
         returns (Structs.Occurrence memory)
     {
-        require(
-            occurrences[_occurenceIdId].id == _occurenceIdId,
-            "IVOccurrenceManager: occurrence does not exist"
-        );
-
-        return occurrences[_occurenceIdId];
+        return occurrences[_occurenceId];
     }
 
-    function getStaffMemberByOccurrenceId(bytes32 _occurenceIdId, address _member)
+    function hostOccurrence(bytes32 _occurenceId, address[] memory _attendees)
+        external
+        onlyCreator
+        occurrenceExists(_occurenceId)
+    {
+        occurrences[_occurenceId].status = Enums.Status.Hosted;
+    }
+
+    function recognizeOccurrence(bytes32 _occurenceId, Structs.Metadata memory _content)
+        external
+        onlyStaff
+        occurrenceExists(_occurenceId)
+    {
+        occurrences[_occurenceId].status = Enums.Status.Recognized;
+    }
+
+    function getStaffMemberByOccurrenceId(bytes32 _occurenceId, address _member)
         external
         view
+        occurrenceExists(_occurenceId)
         returns (Structs.Staff memory)
     {
-        require(
-            occurrences[_occurenceIdId].id == _occurenceIdId,
-            "IVOccurrenceManager: occurrence does not exist"
-        );
-
         return staff[_member];
     }
 
-    function getStaffMembersForOccurrence(bytes32 _occurenceId)
+    function getStaffMembersForOccurrenceId(bytes32 _occurenceId)
         external
         view
+        occurrenceExists(_occurenceId)
         returns (Structs.Staff[] memory)
     {
-        if (occurrences[_occurenceId].id != _occurenceId) {
-            revert Errors.OccurrenceDoesNotExist(_occurenceId);
-        }
-
         Structs.Occurrence memory occurrence = occurrences[_occurenceId];
         Structs.Staff[] memory _staff = new Structs.Staff[](occurrence.staff.length);
 
@@ -166,5 +148,65 @@ contract IVOccurrenceManager is IVStaffManager {
         returns (Structs.Occurrence memory)
     {
         return occurrences[_occurenceIdId];
+    }
+
+    /**
+     * Internal Functions
+     */
+
+    function _createOccurrence(
+        string memory _name,
+        string memory _description,
+        uint256 _start,
+        uint256 _end,
+        uint256 _price,
+        address _token,
+        address[] memory _staff,
+        Structs.Metadata memory _metadata
+    ) internal returns (bytes32) {
+        Structs.Occurrence memory _occurenceId = Structs.Occurrence({
+            id: keccak256(abi.encodePacked(_name, _start, _end)),
+            creator: msg.sender,
+            name: _name,
+            description: _description,
+            start: _start,
+            end: _end,
+            price: _price,
+            token: _token,
+            status: Enums.Status.Pending,
+            staff: _staff,
+            metadata: _metadata,
+            attendees: new address[](9999)
+        });
+
+        occurrences[_occurenceId.id] = _occurenceId;
+        _occurrenceCount++;
+
+        return _occurenceId.id;
+    }
+
+    function _updateOccurrence(
+        bytes32 _occurenceId,
+        string memory _name,
+        string memory _description,
+        uint256 _start,
+        uint256 _end,
+        uint256 _price,
+        address _token,
+        address[] memory _staff,
+        Structs.Metadata memory _metadata
+    ) internal {
+        Structs.Occurrence memory _occurence = occurrences[_occurenceId];
+
+        _occurence.name = _name;
+        _occurence.description = _description;
+        _occurence.start = _start;
+        _occurence.end = _end;
+        _occurence.price = _price;
+        _occurence.token = _token;
+        _occurence.staff = _staff;
+        _occurence.metadata = _metadata;
+
+        occurrences[_occurenceId] = _occurence;
     }
 }

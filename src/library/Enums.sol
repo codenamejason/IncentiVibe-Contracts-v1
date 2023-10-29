@@ -5,6 +5,8 @@ contract Enums {
     enum Status {
         Pending,
         Active,
+        Recognized,
+        Hosted,
         Inactive,
         Rejected
     }

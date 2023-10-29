@@ -10,7 +10,8 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Votes.sol";
 
-import "./library/Errors.sol";
+import { Errors } from "./library/Errors.sol";
+import { Structs } from "./library/Structs.sol";
 
 contract IVERC721BaseToken is
     ERC721,
@@ -29,21 +30,11 @@ contract IVERC721BaseToken is
     uint256 public totalClassesSupply;
     uint256 public maxMintablePerClass;
 
-    mapping(uint256 => Class) public classes;
+    mapping(uint256 => Structs.Class) public classes;
     mapping(address => bool) public campaignMembers;
     mapping(address => mapping(uint256 => uint256)) public mintedPerClass;
     // eventId => token => bool
     mapping(uint256 => mapping(uint256 => bool)) public redeemed;
-
-    struct Class {
-        uint256 id;
-        uint256 supply; // total supply of this class? do we want this?
-        uint256 minted;
-        string name;
-        string description;
-        string imagePointer;
-        string metadata; // this is a pointer to json object that contains the metadata for this class
-    }
 
     /**
      * Events ************
@@ -66,7 +57,7 @@ contract IVERC721BaseToken is
      * @dev This modifier is used to check if the sender is a campaign member
      * @param sender The sender address
      */
-    modifier onlyCampaingnMember(address sender) {
+    modifier onlyMinter(address sender) {
         if (!hasRole(MINTER_ROLE, sender)) {
             revert Errors.Unauthorized(sender);
         }
@@ -80,8 +71,6 @@ contract IVERC721BaseToken is
         string memory _name,
         string memory _symbol
     ) ERC721(_name, _symbol) EIP712(_name, "1") {
-        _addCampaignMember(_defaultAdmin);
-
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
         _grantRole(PAUSER_ROLE, _pauser);
         _grantRole(MINTER_ROLE, _minter);
@@ -92,33 +81,6 @@ contract IVERC721BaseToken is
      */
 
     /**
-     * @notice Adds a campaign member
-     * @dev This function is only callable by the owner
-     * @param _member The member to add
-     */
-    function addCampaignMember(address _member) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _addCampaignMember(_member);
-    }
-
-    /**
-     * @notice Adds a campaign member
-     * @dev This function is internal
-     * @param _member The member to add
-     */
-    function _addCampaignMember(address _member) internal {
-        _grantRole(MINTER_ROLE, _member);
-    }
-
-    /**
-     * @notice Removes a campaign member
-     * @dev This function is only callable by the owner
-     * @param _member The member to remove
-     */
-    function removeCampaignMember(address _member) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        revokeRole(MINTER_ROLE, _member);
-    }
-
-    /**
      * @notice Awards campaign nft to supporter
      * @dev This function is only callable by campaign members
      * @param _recipient The recipient of the item
@@ -126,7 +88,7 @@ contract IVERC721BaseToken is
      */
     function awardCampaignItem(address _recipient, uint256 _classId)
         external
-        onlyCampaingnMember(msg.sender)
+        onlyMinter(msg.sender)
         returns (uint256)
     {
         if (mintedPerClass[_recipient][_classId] > maxMintablePerClass) {
@@ -149,7 +111,7 @@ contract IVERC721BaseToken is
      */
     function batchAwardCampaignItem(address[] memory _recipients, uint256[] memory _classIds)
         external
-        onlyCampaingnMember(msg.sender)
+        onlyMinter(msg.sender)
         returns (uint256[] memory)
     {
         uint256 length = _recipients.length;
@@ -174,26 +136,6 @@ contract IVERC721BaseToken is
     }
 
     /**
-     * @notice Redeems a campaign item
-     * @dev This function is only callable by campaign members
-     * @param _eventId The event ID
-     * @param _tokenId The token ID
-     */
-    function redeem(uint256 _eventId, uint256 _tokenId) external onlyCampaingnMember(msg.sender) {
-        if (super.ownerOf(_tokenId) == address(0)) {
-            revert Errors.InvalidTokenId(_tokenId);
-        }
-
-        if (redeemed[_eventId][_tokenId]) {
-            revert Errors.AlreadyRedeemed(_eventId, _tokenId);
-        }
-
-        redeemed[_eventId][_tokenId] = true;
-
-        emit Redeemed(_eventId, _tokenId, classes[_tokenId].id);
-    }
-
-    /**
      * @notice Adds a new class to the campaign for issuance
      * @dev This function is only callable by campaign members
      * @param _name The name of the class
@@ -208,11 +150,11 @@ contract IVERC721BaseToken is
         string memory _imagePointer,
         string memory _metadata,
         uint256 _supply
-    ) external onlyCampaingnMember(msg.sender) {
+    ) external onlyMinter(msg.sender) {
         uint256 id = ++classIds;
         totalClassesSupply += _supply;
 
-        classes[id] = Class(id, _supply, 0, _name, _description, _imagePointer, _metadata);
+        classes[id] = Structs.Class(id, _supply, 0, _name, _description, _imagePointer, _metadata);
 
         emit ClassAdded(id, _metadata);
     }
@@ -220,8 +162,8 @@ contract IVERC721BaseToken is
     /**
      * @notice Returns all classes
      */
-    function getAllClasses() public view returns (Class[] memory) {
-        Class[] memory _classes = new Class[](classIds);
+    function getAllClasses() public view returns (Structs.Class[] memory) {
+        Structs.Class[] memory _classes = new Structs.Class[](classIds);
 
         for (uint256 i = 0; i < classIds; i++) {
             _classes[i] = classes[i + 1];
@@ -262,7 +204,7 @@ contract IVERC721BaseToken is
      */
     function setClassTokenSupply(uint256 _classId, uint256 _supply)
         external
-        onlyCampaingnMember(msg.sender)
+        onlyMinter(msg.sender)
     {
         uint256 currentSupply = classes[_classId].supply;
         uint256 minted = classes[_classId].minted;
