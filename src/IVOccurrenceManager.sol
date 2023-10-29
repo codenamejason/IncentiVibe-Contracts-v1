@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.20;
 
-import { Occurrence } from "./library/Occurrence.sol";
-import { Staff } from "./library/Staff.sol";
+import { IVStaffManager } from "./IVStaffManager.sol";
 import { Enums } from "./library/Enums.sol";
-import { Metadata } from "./library/Metadata.sol";
+import { Structs } from "./library/Structs.sol";
 
-import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+// import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
  * @title IVOccurrenceManager
@@ -14,31 +13,17 @@ import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol"
  * @dev We use the term occurrence to describe an event, appointment, or any other type of gathering.
  * @author @codenamejason <jax@jaxdoder.xyz>
  */
-contract IVOccurrenceManager is AccessControl {
+contract IVOccurrenceManager is IVStaffManager {
     bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
-    bytes32 public constant STAFF_ROLE = keccak256("STAFF_ROLE");
 
-    mapping(address => Staff) public staff;
-    mapping(bytes32 => Occurrence) public occurrences;
+    mapping(bytes32 => Structs.Occurrence) public occurrences;
 
     modifier onlyCreator() {
         require(hasRole(CREATOR_ROLE, msg.sender), "IVOccurrenceManager: caller is not a creator");
         _;
     }
 
-    modifier onlyStaff() {
-        require(hasRole(STAFF_ROLE, msg.sender), "IVOccurrenceManager: caller is not a staff");
-        _;
-    }
-
-    modifier onlyAdmin() {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "IVOccurrenceManager: caller is not an admin"
-        );
-        _;
-    }
-
-    constructor(address _defaultAdmin) {
+    constructor(address _defaultAdmin) IVStaffManager(_defaultAdmin) {
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
     }
 
@@ -62,9 +47,9 @@ contract IVOccurrenceManager is AccessControl {
         uint256 _price,
         address _token,
         address[] memory _staff,
-        Metadata memory _metadata
+        Structs.Metadata memory _metadata
     ) external returns (bytes32) {
-        Occurrence memory _occurenceId = Occurrence({
+        Structs.Occurrence memory _occurenceId = Structs.Occurrence({
             id: keccak256(abi.encodePacked(_name, _start, _end)),
             creator: msg.sender,
             name: _name,
@@ -92,14 +77,14 @@ contract IVOccurrenceManager is AccessControl {
         uint256 _price,
         address _token,
         address[] memory _staff,
-        Metadata memory _metadata
+        Structs.Metadata memory _metadata
     ) external onlyCreator {
         require(
             occurrences[_occurenceIdId].id == _occurenceIdId,
             "IVOccurrenceManager: occurrence does not exist"
         );
 
-        Occurrence memory _occurenceId = Occurrence({
+        Structs.Occurrence memory _occurenceId = Structs.Occurrence({
             id: keccak256(abi.encodePacked(_name, _start, _end)),
             creator: msg.sender,
             name: _name,
@@ -116,71 +101,11 @@ contract IVOccurrenceManager is AccessControl {
         occurrences[_occurenceId.id] = _occurenceId;
     }
 
-    function addStaffMember(
-        address _member,
-        // uint256[] memory _levels,
-        Metadata memory _metadata
-    ) external onlyCreator {
-        Staff memory _staff = Staff({
-            id: keccak256(abi.encodePacked(_member)),
-            member: _member,
-            metadata: _metadata,
-            // levels: _levels,
-            status: Enums.Status.Pending
-        });
-
-        _grantRole(STAFF_ROLE, _member);
-
-        // for (uint256 i = 0; i < _levels.length; i++) {
-        //     _staff.levels[_member].push(_levels[i]);
-        // }
-
-        staff[_staff.member] = _staff;
-    }
-
-    function updateStaffMember(
-        address _member,
-        // uint256[] memory _levels,
-        Metadata memory _metadata
-    ) external onlyCreator {
-        Staff memory _staff = Staff({
-            id: keccak256(abi.encodePacked(_member)),
-            member: _member,
-            metadata: _metadata,
-            // levels: _levels,
-            status: Enums.Status.Pending
-        });
-
-        // for (uint256 i = 0; i < _levels.length; i++) {
-        //     _staff.levels[_member].push(_levels[i]);
-        // }
-
-        staff[_staff.member] = _staff;
-    }
-
-    function updateStaffMemberStatus(address _member, Enums.Status _status) external onlyCreator {
-        Staff memory _staff = staff[_member];
-        _staff.status = _status;
-
-        staff[_staff.member] = _staff;
-    }
-
-    function updateOccurrenceStatus(bytes32 _occurenceIdId, Enums.Status _status)
+    function getOccurrence(bytes32 _occurenceIdId)
         external
-        onlyCreator
+        view
+        returns (Structs.Occurrence memory)
     {
-        require(
-            occurrences[_occurenceIdId].id == _occurenceIdId,
-            "IVOccurrenceManager: occurrence does not exist"
-        );
-
-        Occurrence memory _occurenceId = occurrences[_occurenceIdId];
-        _occurenceId.status = _status;
-
-        occurrences[_occurenceId.id] = _occurenceId;
-    }
-
-    function getOccurrence(bytes32 _occurenceIdId) external view returns (Occurrence memory) {
         require(
             occurrences[_occurenceIdId].id == _occurenceIdId,
             "IVOccurrenceManager: occurrence does not exist"
@@ -192,7 +117,7 @@ contract IVOccurrenceManager is AccessControl {
     function getStaffMember(bytes32 _occurenceIdId, address _member)
         external
         view
-        returns (Staff memory)
+        returns (Structs.Staff memory)
     {
         require(
             occurrences[_occurenceIdId].id == _occurenceIdId,
@@ -202,14 +127,18 @@ contract IVOccurrenceManager is AccessControl {
         return staff[_member];
     }
 
-    function getStaffMembers(bytes32 _occurenceIdId) external view returns (Staff[] memory) {
+    function getStaffMembers(bytes32 _occurenceIdId)
+        external
+        view
+        returns (Structs.Staff[] memory)
+    {
         require(
             occurrences[_occurenceIdId].id == _occurenceIdId,
             "IVOccurrenceManager: occurrence does not exist"
         );
 
-        Occurrence memory _occurenceId = occurrences[_occurenceIdId];
-        Staff[] memory _staff = new Staff[](_occurenceId.staff.length);
+        Structs.Occurrence memory _occurenceId = occurrences[_occurenceIdId];
+        Structs.Staff[] memory _staff = new Structs.Staff[](_occurenceId.staff.length);
 
         for (uint256 i = 0; i < _occurenceId.staff.length; i++) {
             _staff[i] = staff[_occurenceId.staff[i]];
@@ -218,11 +147,15 @@ contract IVOccurrenceManager is AccessControl {
         return _staff;
     }
 
-    function getOccurrences() external view returns (Occurrence[] memory) {
+    function getOccurrences() external view returns (Structs.Occurrence[] memory) {
         // TODO:
     }
 
-    function getOccurrenceById(bytes32 _occurenceIdId) external view returns (Occurrence memory) {
+    function getOccurrenceById(bytes32 _occurenceIdId)
+        external
+        view
+        returns (Structs.Occurrence memory)
+    {
         return occurrences[_occurenceIdId];
     }
 }

@@ -4,9 +4,8 @@ pragma solidity 0.8.20;
 import { Test, console2, StdUtils } from "forge-std/Test.sol";
 
 import { IVOccurrenceManager } from "../src/IVOccurrenceManager.sol";
-import { Occurrence } from "../src/library/Occurrence.sol";
 import { Enums } from "../src/library/Enums.sol";
-import { Metadata } from "../src/library/Metadata.sol";
+import { Structs } from "../src/library/Structs.sol";
 
 contract IVOccurrenceManagerTest is Test {
     IVOccurrenceManager ivOccurrenceManager;
@@ -31,7 +30,7 @@ contract IVOccurrenceManagerTest is Test {
             // todo: add mock
             address(makeAddr("token")),
             staff,
-            Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" })
+            Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" })
         );
 
         (bytes32 _occurrence,, string memory name, string memory description, uint256 start,,,,,) =
