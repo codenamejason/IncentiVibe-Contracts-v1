@@ -20,8 +20,7 @@ contract Will4USNFTScript is Script {
         // assertEq(url, "https://arb-goerli.g.alchemy.com/v2/RqTiyvS7OspxaAQUQupKKCTjmf94JL-I");
         vm.startBroadcast(deployerPrivateKey);
 
-        Will4USNFT nftContract =
-            new Will4USNFT(deployerAddress, deployerAddress, deployerAddress, 5);
+        new Will4USNFT(deployerAddress, deployerAddress, deployerAddress, 5);
 
         // nftContract.awardCampaignItem(deployerAddress, 1);
 

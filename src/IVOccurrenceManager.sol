@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { IVStaffManager } from "./IVStaffManager.sol";
 import { Enums } from "./library/Enums.sol";
 import { Structs } from "./library/Structs.sol";
+import { Errors } from "./library/Errors.sol";
 
 // import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
@@ -17,6 +18,7 @@ contract IVOccurrenceManager is IVStaffManager {
     bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
 
     mapping(bytes32 => Structs.Occurrence) public occurrences;
+    uint256 private _occurrenceCount;
 
     modifier onlyCreator() {
         require(hasRole(CREATOR_ROLE, msg.sender), "IVOccurrenceManager: caller is not a creator");
@@ -64,6 +66,7 @@ contract IVOccurrenceManager is IVStaffManager {
         });
 
         occurrences[_occurenceId.id] = _occurenceId;
+        _occurrenceCount++;
 
         return _occurenceId.id;
     }
@@ -114,7 +117,7 @@ contract IVOccurrenceManager is IVStaffManager {
         return occurrences[_occurenceIdId];
     }
 
-    function getStaffMember(bytes32 _occurenceIdId, address _member)
+    function getStaffMemberByOccurrenceId(bytes32 _occurenceIdId, address _member)
         external
         view
         returns (Structs.Staff memory)
@@ -127,28 +130,34 @@ contract IVOccurrenceManager is IVStaffManager {
         return staff[_member];
     }
 
-    function getStaffMembers(bytes32 _occurenceIdId)
+    function getStaffMembersForOccurrence(bytes32 _occurenceId)
         external
         view
         returns (Structs.Staff[] memory)
     {
-        require(
-            occurrences[_occurenceIdId].id == _occurenceIdId,
-            "IVOccurrenceManager: occurrence does not exist"
-        );
+        if (occurrences[_occurenceId].id != _occurenceId) {
+            revert Errors.OccurrenceDoesNotExist(_occurenceId);
+        }
 
-        Structs.Occurrence memory _occurenceId = occurrences[_occurenceIdId];
-        Structs.Staff[] memory _staff = new Structs.Staff[](_occurenceId.staff.length);
+        Structs.Occurrence memory occurrence = occurrences[_occurenceId];
+        Structs.Staff[] memory _staff = new Structs.Staff[](occurrence.staff.length);
 
-        for (uint256 i = 0; i < _occurenceId.staff.length; i++) {
-            _staff[i] = staff[_occurenceId.staff[i]];
+        for (uint256 i = 0; i < occurrence.staff.length; i++) {
+            _staff[i] = staff[occurrence.staff[i]];
         }
 
         return _staff;
     }
 
     function getOccurrences() external view returns (Structs.Occurrence[] memory) {
-        // TODO:
+        Structs.Occurrence[] memory _occurrences = new Structs.Occurrence[](_occurrenceCount);
+
+        for (uint256 i = 0; i < _occurrenceCount; i++) {
+            // FIXME: this is not the correct way to do this
+            _occurrences[i] = occurrences[keccak256(abi.encodePacked(i))];
+        }
+
+        return _occurrences;
     }
 
     function getOccurrenceById(bytes32 _occurenceIdId)

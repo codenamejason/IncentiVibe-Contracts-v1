@@ -171,7 +171,18 @@ contract Will4USNFTTest is Test {
             string memory imagePointer,
             string memory metadataPointer
         ) = nftContract.classes(2);
+
         assertEq(name, "name2", "Class name should be name");
+        assertEq(description, "description", "Class description should be description");
+        assertEq(imagePointer, "imagePointer", "Class imagePointer should be imagePointer");
+        assertEq(
+            metadataPointer,
+            "https://a_new_pointer_to_json_object.io",
+            "Class metadataPointer should be metadataPointer"
+        );
+        assertEq(supply, 1e7, "Class supply should be 1e7");
+        assertEq(minted, 0, "Class minted should be 0");
+        assertEq(id, 2, "Class id should be 2");
     }
 
     function test_revert_addClass_Unauthorized() public {

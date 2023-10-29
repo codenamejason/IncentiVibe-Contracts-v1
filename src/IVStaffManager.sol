@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import { Enums } from "./library/Enums.sol";
 import { Structs } from "../src/library/Structs.sol";
+import { Errors } from "../src/library/Errors.sol";
 
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 

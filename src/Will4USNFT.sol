@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.20;
 
+import { Errors } from "./library/Errors.sol";
+
 import { ERC721URIStorage } from
     "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import { ERC721 } from "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
@@ -41,15 +43,6 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
     }
 
     /**
-     * Errors ************
-     */
-    error InvalidTokenId(uint256 tokenId);
-    error MaxMintablePerClassReached(address recipient, uint256 classId, uint256 maxMintable);
-    error AlreadyRedeemed(uint256 eventId, uint256 tokenId);
-    error Unauthorized(address sender);
-    error NewSupplyTooLow(uint256 minted, uint256 supply);
-
-    /**
      * Events ************
      */
     event ItemAwarded(uint256 indexed tokenId, address indexed recipient, uint256 indexed classId);
@@ -72,7 +65,7 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      */
     modifier onlyCampaingnMember(address sender) {
         if (!hasRole(MINTER_ROLE, sender)) {
-            revert Unauthorized(sender);
+            revert Errors.Unauthorized(sender);
         }
         _;
     }
@@ -139,7 +132,7 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
         returns (uint256)
     {
         if (mintedPerClass[_recipient][_classId] > maxMintablePerClass) {
-            revert MaxMintablePerClassReached(_recipient, _classId, maxMintablePerClass);
+            revert Errors.MaxMintablePerClassReached(_recipient, _classId, maxMintablePerClass);
         }
 
         uint256 tokenId = _mintCampaingnItem(_recipient, _classId);
@@ -190,11 +183,11 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      */
     function redeem(uint256 _eventId, uint256 _tokenId) external onlyCampaingnMember(msg.sender) {
         if (super.ownerOf(_tokenId) == address(0)) {
-            revert InvalidTokenId(_tokenId);
+            revert Errors.InvalidTokenId(_tokenId);
         }
 
         if (redeemed[_eventId][_tokenId]) {
-            revert AlreadyRedeemed(_eventId, _tokenId);
+            revert Errors.AlreadyRedeemed(_eventId, _tokenId);
         }
 
         redeemed[_eventId][_tokenId] = true;
@@ -259,7 +252,7 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
 
             return tokenURI(_tokenId);
         } else {
-            revert InvalidTokenId(_tokenId);
+            revert Errors.InvalidTokenId(_tokenId);
         }
     }
 
@@ -280,7 +273,7 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
             // if the new supply is less than the current supply, we need to check if the new supply is less than the minted
             // if it is, then we need to revert
             if (_supply < minted) {
-                revert NewSupplyTooLow(minted, _supply);
+                revert Errors.NewSupplyTooLow(minted, _supply);
             }
         }
 
