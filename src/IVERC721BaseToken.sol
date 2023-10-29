@@ -1,47 +1,40 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity 0.8.20;
+// SPDX-License-Identifier: AGPL-3.0-only
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Pausable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
+import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Votes.sol";
 
 import { Errors } from "./library/Errors.sol";
+import { Structs } from "./library/Structs.sol";
+import { RedemtionModule } from "./RedemtionModule.sol";
 
-import { ERC721URIStorage } from
-    "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import { ERC721 } from "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
-import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
-import { Strings } from "openzeppelin-contracts/contracts/utils/Strings.sol";
-
-/// @notice This contract is the Main NFT contract for the Will 4 US Campaign
-/// @dev This contract is used to mint NFTs for the Will 4 US Campaign
-/// @author @codenamejason <jax@jaxcoder.xyz>
-contract Will4USNFT is ERC721URIStorage, AccessControl {
-    using Strings for uint256;
-    /**
-     * State Variables ********
-     */
-
+contract IVERC721BaseToken is
+    RedemtionModule,
+    ERC721,
+    ERC721Enumerable,
+    ERC721URIStorage,
+    ERC721Pausable,
+    AccessControl,
+    ERC721Burnable,
+    EIP712,
+    ERC721Votes
+{
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-
     uint256 private _tokenIds;
     uint256 public classIds;
     uint256 public totalClassesSupply;
     uint256 public maxMintablePerClass;
 
-    mapping(uint256 => Class) public classes;
-    mapping(address => bool) public campaignMembers;
+    mapping(uint256 => Structs.Class) public classes;
     mapping(address => mapping(uint256 => uint256)) public mintedPerClass;
-    // occurrenceId => token => bool
-    mapping(bytes32 => mapping(uint256 => bool)) public redeemed;
-
-    struct Class {
-        uint256 id;
-        uint256 supply; // total supply of this class? do we want this?
-        uint256 minted;
-        string name;
-        string description;
-        string imagePointer;
-        string metadata; // this is a pointer to json object that contains the metadata for this class
-    }
-
+    
     /**
      * Events ************
      */
@@ -52,7 +45,6 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
     event ClassAdded(uint256 indexed classId, string metadata);
     event UpdatedClassTokenSupply(uint256 indexed classId, uint256 supply);
     event UpdatedMaxMintablePerClass(uint256 maxMintable);
-    event Redeemed(bytes32 indexed occurrenceId, uint256 indexed tokenId, uint256 indexed classId);
 
     /**
      * Modifiers ************
@@ -63,30 +55,23 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      * @dev This modifier is used to check if the sender is a campaign member
      * @param sender The sender address
      */
-    modifier onlyCampaingnMember(address sender) {
+    modifier onlyMinter(address sender) {
         if (!hasRole(MINTER_ROLE, sender)) {
             revert Errors.Unauthorized(sender);
         }
         _;
     }
 
-    /**
-     * Constructor *********
-     */
     constructor(
         address _defaultAdmin,
-        address _minter,
         address _pauser,
-        uint256 _maxMintablePerClass
-    ) ERC721("Will 4 US NFT Collection", "WILL4USNFT") {
-        // add the owner to the campaign members
-        _addCampaignMember(_defaultAdmin);
-
+        address _minter,
+        string memory _name,
+        string memory _symbol
+    ) ERC721(_name, _symbol) EIP712(_name, "1") {
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
         _grantRole(PAUSER_ROLE, _pauser);
         _grantRole(MINTER_ROLE, _minter);
-
-        _setMaxMintablePerClass(_maxMintablePerClass);
     }
 
     /**
@@ -94,48 +79,21 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      */
 
     /**
-     * @notice Adds a campaign member
-     * @dev This function is only callable by the owner
-     * @param _member The member to add
-     */
-    function addCampaignMember(address _member) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _addCampaignMember(_member);
-    }
-
-    /**
-     * @notice Adds a campaign member
-     * @dev This function is internal
-     * @param _member The member to add
-     */
-    function _addCampaignMember(address _member) internal {
-        _grantRole(MINTER_ROLE, _member);
-    }
-
-    /**
-     * @notice Removes a campaign member
-     * @dev This function is only callable by the owner
-     * @param _member The member to remove
-     */
-    function removeCampaignMember(address _member) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        revokeRole(MINTER_ROLE, _member);
-    }
-
-    /**
-     * @notice Awards campaign nft to supporter
-     * @dev This function is only callable by campaign members
+     * @notice Awards nft to address
+     * @dev This function is only callable by staff
      * @param _recipient The recipient of the item
      * @param _classId The class ID
      */
-    function awardCampaignItem(address _recipient, uint256 _classId)
+    function awardItem(address _recipient, uint256 _classId)
         external
-        onlyCampaingnMember(msg.sender)
+        onlyMinter(msg.sender)
         returns (uint256)
     {
         if (mintedPerClass[_recipient][_classId] > maxMintablePerClass) {
             revert Errors.MaxMintablePerClassReached(_recipient, _classId, maxMintablePerClass);
         }
 
-        uint256 tokenId = _mintCampaingnItem(_recipient, _classId);
+        uint256 tokenId = _mintItem(_recipient, _classId);
         mintedPerClass[_recipient][_classId]++;
 
         emit ItemAwarded(tokenId, _recipient, _classId);
@@ -144,14 +102,14 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
     }
 
     /**
-     * @notice Awards campaign nft to a batch of supporters
-     * @dev This function is only callable by campaign members
+     * @notice Awards nft to a batch of addresses
+     * @dev This function is only callable by staff
      * @param _recipients The recipients of the item
      * @param _classIds The class IDs
      */
-    function batchAwardCampaignItem(address[] memory _recipients, uint256[] memory _classIds)
+    function batchAwardItem(address[] memory _recipients, uint256[] memory _classIds)
         external
-        onlyCampaingnMember(msg.sender)
+        onlyMinter(msg.sender)
         returns (uint256[] memory)
     {
         uint256 length = _recipients.length;
@@ -162,7 +120,7 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
                 revert("You have reached the max mintable for this class");
             }
 
-            tokenIds[i] = _mintCampaingnItem(_recipients[i], _classIds[i]);
+            tokenIds[i] = _mintItem(_recipients[i], _classIds[i]);
             mintedPerClass[_recipients[i]][_classIds[i]]++;
 
             emit ItemAwarded(tokenIds[i], _recipients[i], _classIds[i]);
@@ -176,28 +134,8 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
     }
 
     /**
-     * @notice Redeems a campaign item
-     * @dev This function is only callable by campaign members
-     * @param _occurrenceId The occurrence ID
-     * @param _tokenId The token ID
-     */
-    function redeem(bytes32 _occurrenceId, uint256 _tokenId) external onlyCampaingnMember(msg.sender) {
-        if (super.ownerOf(_tokenId) == address(0)) {
-            revert Errors.InvalidTokenId(_tokenId);
-        }
-
-        if (redeemed[_occurrenceId][_tokenId]) {
-            revert Errors.AlreadyRedeemed(_occurrenceId, _tokenId);
-        }
-
-        redeemed[_occurrenceId][_tokenId] = true;
-
-        emit Redeemed(_occurrenceId, _tokenId, classes[_tokenId].id);
-    }
-
-    /**
-     * @notice Adds a new class to the campaign for issuance
-     * @dev This function is only callable by campaign members
+     * @notice Adds a new class
+     * @dev This function is only callable by staff
      * @param _name The name of the class
      * @param _description The description of the class
      * @param _imagePointer The image pointer for the class
@@ -210,11 +148,11 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
         string memory _imagePointer,
         string memory _metadata,
         uint256 _supply
-    ) external onlyCampaingnMember(msg.sender) {
+    ) external onlyMinter(msg.sender) {
         uint256 id = ++classIds;
         totalClassesSupply += _supply;
 
-        classes[id] = Class(id, _supply, 0, _name, _description, _imagePointer, _metadata);
+        classes[id] = Structs.Class(id, _supply, 0, _name, _description, _imagePointer, _metadata);
 
         emit ClassAdded(id, _metadata);
     }
@@ -222,8 +160,8 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
     /**
      * @notice Returns all classes
      */
-    function getAllClasses() public view returns (Class[] memory) {
-        Class[] memory _classes = new Class[](classIds);
+    function getAllClasses() public view returns (Structs.Class[] memory) {
+        Structs.Class[] memory _classes = new Structs.Class[](classIds);
 
         for (uint256 i = 0; i < classIds; i++) {
             _classes[i] = classes[i + 1];
@@ -234,7 +172,7 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
 
     /**
      * @notice Updates the token metadata
-     * @dev This function is only callable by campaign members - only use if you really need to
+     * @dev This function is only callable by staff - only use if you really need to
      * @param _tokenId The token ID to update
      * @param _classId The class ID
      * @param _newTokenURI The new token URI 🚨 must be a pointer to a json object 🚨
@@ -258,13 +196,13 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
 
     /**
      * @notice Sets the class token supply
-     * @dev This function is only callable by campaign members
+     * @dev This function is only callable by staff
      * @param _classId The class ID
      * @param _supply The new supply
      */
     function setClassTokenSupply(uint256 _classId, uint256 _supply)
         external
-        onlyCampaingnMember(msg.sender)
+        onlyMinter(msg.sender)
     {
         uint256 currentSupply = classes[_classId].supply;
         uint256 minted = classes[_classId].minted;
@@ -285,31 +223,8 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
     }
 
     /**
-     * @notice Sets the max mintable per wallet
-     * @dev This function is only callable by campaign members
-     * @param _maxMintable The new max mintable
-     */
-    function setMaxMintablePerClass(uint256 _maxMintable)
-        external
-        onlyCampaingnMember(msg.sender)
-    {
-        _setMaxMintablePerClass(_maxMintable);
-    }
-
-    /**
      * View Functions ******
      */
-
-    /**
-     * @notice Returns if the token has been redeemed for an occurrence
-     * @param _occurrenceId The occurrence ID
-     * @param _tokenId The token ID
-     * @return bool Returns true if the token has been redeemed
-     */
-
-    function getRedeemed(bytes32 _occurrenceId, uint256 _tokenId) external view returns (bool) {
-        return redeemed[_occurrenceId][_tokenId];
-    }
 
     /**
      * @notice Returns the total supply for a class
@@ -361,21 +276,11 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      */
 
     /**
-     * @notice Sets the max mintable per wallet
-     * @dev Intenral function to set the max mintable per wallet
-     * @param _maxMintable The new max mintable
-     */
-    function _setMaxMintablePerClass(uint256 _maxMintable) internal {
-        maxMintablePerClass = _maxMintable;
-        emit UpdatedMaxMintablePerClass(_maxMintable);
-    }
-
-    /**
      * @notice Mints a new campaign item
      * @param _recipient The recipient of the item
      * @param _classId The class ID
      */
-    function _mintCampaingnItem(address _recipient, uint256 _classId) internal returns (uint256) {
+    function _mintItem(address _recipient, uint256 _classId) internal returns (uint256) {
         uint256 tokenId = ++_tokenIds;
 
         // update the class minted count
@@ -391,21 +296,36 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      * Overrides
      */
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(AccessControl, ERC721URIStorage)
-        returns (bool)
-    { }
+    function _update(address to, uint256 tokenId, address auth)
+        internal
+        override(ERC721, ERC721Enumerable, ERC721Pausable, ERC721Votes)
+        returns (address)
+    {
+        return super._update(to, tokenId, auth);
+    }
+
+    function _increaseBalance(address account, uint128 value)
+        internal
+        override(ERC721, ERC721Enumerable, ERC721Votes)
+    {
+        super._increaseBalance(account, value);
+    }
 
     function tokenURI(uint256 tokenId)
         public
         view
-        virtual
-        override(ERC721URIStorage)
+        override(ERC721, ERC721URIStorage)
         returns (string memory)
     {
         return super.tokenURI(tokenId);
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC721, ERC721Enumerable, ERC721URIStorage, AccessControl)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
     }
 }
