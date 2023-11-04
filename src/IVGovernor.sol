@@ -21,9 +21,12 @@ contract IVGovernor is
     GovernorVotesQuorumFraction,
     GovernorTimelockControl
 {
-    constructor(IVotes _token, TimelockController _timelock)
+    constructor(
+        IVotes _token,
+        TimelockController _timelock
+    )
         Governor("IVGovernor")
-        GovernorSettings(7200, /* 1 day */ 50400, /* 1 week */ 0)
+        GovernorSettings(7200, /* 1 day */ 50_400, /* 1 week */ 0)
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(4)
         GovernorTimelockControl(_timelock)
@@ -66,12 +69,7 @@ contract IVGovernor is
         return super.proposalNeedsQueuing(proposalId);
     }
 
-    function proposalThreshold()
-        public
-        view
-        override(Governor, GovernorSettings)
-        returns (uint256)
-    {
+    function proposalThreshold() public view override(Governor, GovernorSettings) returns (uint256) {
         return super.proposalThreshold();
     }
 
@@ -81,7 +79,11 @@ contract IVGovernor is
         bytes[] memory calldatas,
         string memory description,
         address proposer
-    ) internal override(Governor, GovernorStorage) returns (uint256) {
+    )
+        internal
+        override(Governor, GovernorStorage)
+        returns (uint256)
+    {
         return super._propose(targets, values, calldatas, description, proposer);
     }
 
@@ -91,7 +93,11 @@ contract IVGovernor is
         uint256[] memory values,
         bytes[] memory calldatas,
         bytes32 descriptionHash
-    ) internal override(Governor, GovernorTimelockControl) returns (uint48) {
+    )
+        internal
+        override(Governor, GovernorTimelockControl)
+        returns (uint48)
+    {
         return super._queueOperations(proposalId, targets, values, calldatas, descriptionHash);
     }
 
@@ -101,7 +107,10 @@ contract IVGovernor is
         uint256[] memory values,
         bytes[] memory calldatas,
         bytes32 descriptionHash
-    ) internal override(Governor, GovernorTimelockControl) {
+    )
+        internal
+        override(Governor, GovernorTimelockControl)
+    {
         super._executeOperations(proposalId, targets, values, calldatas, descriptionHash);
     }
 
@@ -110,16 +119,15 @@ contract IVGovernor is
         uint256[] memory values,
         bytes[] memory calldatas,
         bytes32 descriptionHash
-    ) internal override(Governor, GovernorTimelockControl) returns (uint256) {
+    )
+        internal
+        override(Governor, GovernorTimelockControl)
+        returns (uint256)
+    {
         return super._cancel(targets, values, calldatas, descriptionHash);
     }
 
-    function _executor()
-        internal
-        view
-        override(Governor, GovernorTimelockControl)
-        returns (address)
-    {
+    function _executor() internal view override(Governor, GovernorTimelockControl) returns (address) {
         return super._executor();
     }
 }

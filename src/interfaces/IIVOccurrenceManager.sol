@@ -19,7 +19,9 @@ interface IIVOccurrenceManager {
         address token,
         address[] memory staff,
         Structs.Metadata memory metadata
-    ) external returns (bytes32);
+    )
+        external
+        returns (bytes32);
     function updateOccurrence(
         bytes32 occurenceId,
         string memory name,

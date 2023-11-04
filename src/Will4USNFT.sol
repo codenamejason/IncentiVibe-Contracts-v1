@@ -3,8 +3,7 @@ pragma solidity 0.8.22;
 
 import { Errors } from "./library/Errors.sol";
 
-import { ERC721URIStorage } from
-    "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import { ERC721URIStorage } from "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import { ERC721 } from "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { Strings } from "openzeppelin-contracts/contracts/utils/Strings.sol";
@@ -78,7 +77,9 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
         address _minter,
         address _pauser,
         uint256 _maxMintablePerClass
-    ) ERC721("Will 4 US NFT Collection", "WILL4USNFT") {
+    )
+        ERC721("Will 4 US NFT Collection", "WILL4USNFT")
+    {
         // add the owner to the campaign members
         _addCampaignMember(_defaultAdmin);
 
@@ -126,7 +127,10 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      * @param _recipient The recipient of the item
      * @param _classId The class ID
      */
-    function awardCampaignItem(address _recipient, uint256 _classId)
+    function awardCampaignItem(
+        address _recipient,
+        uint256 _classId
+    )
         external
         onlyCampaingnMember(msg.sender)
         returns (uint256)
@@ -149,7 +153,10 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      * @param _recipients The recipients of the item
      * @param _classIds The class IDs
      */
-    function batchAwardCampaignItem(address[] memory _recipients, uint256[] memory _classIds)
+    function batchAwardCampaignItem(
+        address[] memory _recipients,
+        uint256[] memory _classIds
+    )
         external
         onlyCampaingnMember(msg.sender)
         returns (uint256[] memory)
@@ -213,7 +220,10 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
         string memory _imagePointer,
         string memory _metadata,
         uint256 _supply
-    ) external onlyCampaingnMember(msg.sender) {
+    )
+        external
+        onlyCampaingnMember(msg.sender)
+    {
         uint256 id = ++classIds;
         totalClassesSupply += _supply;
 
@@ -243,7 +253,11 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      * @param _newTokenURI The new token URI 🚨 must be a pointer to a json object 🚨
      * @return The new token URI
      */
-    function updateTokenMetadata(uint256 _classId, uint256 _tokenId, string memory _newTokenURI)
+    function updateTokenMetadata(
+        uint256 _classId,
+        uint256 _tokenId,
+        string memory _newTokenURI
+    )
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
         returns (string memory)
@@ -265,15 +279,13 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      * @param _classId The class ID
      * @param _supply The new supply
      */
-    function setClassTokenSupply(uint256 _classId, uint256 _supply)
-        external
-        onlyCampaingnMember(msg.sender)
-    {
+    function setClassTokenSupply(uint256 _classId, uint256 _supply) external onlyCampaingnMember(msg.sender) {
         uint256 currentSupply = classes[_classId].supply;
         uint256 minted = classes[_classId].minted;
 
         if (_supply < currentSupply) {
-            // if the new supply is less than the current supply, we need to check if the new supply is less than the minted
+            // if the new supply is less than the current supply, we need to check if the new supply is less than the
+            // minted
             // if it is, then we need to revert
             if (_supply < minted) {
                 revert Errors.NewSupplyTooLow(minted, _supply);
@@ -292,10 +304,7 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      * @dev This function is only callable by campaign members
      * @param _maxMintable The new max mintable
      */
-    function setMaxMintablePerClass(uint256 _maxMintable)
-        external
-        onlyCampaingnMember(msg.sender)
-    {
+    function setMaxMintablePerClass(uint256 _maxMintable) external onlyCampaingnMember(msg.sender) {
         _setMaxMintablePerClass(_maxMintable);
     }
 
@@ -334,9 +343,7 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      */
     function _baseURI() internal pure override returns (string memory) {
         // TODO: 🚨 update this when production ready 🚨
-        return string.concat(
-            "https://pharo.mypinata.cloud/ipfs/QmSnzdnhtCuJ6yztHmtYFT7eU2hFF17QNM6rsNohFn6csg/"
-        );
+        return string.concat("https://pharo.mypinata.cloud/ipfs/QmSnzdnhtCuJ6yztHmtYFT7eU2hFF17QNM6rsNohFn6csg/");
     }
 
     /**
@@ -402,13 +409,7 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
         returns (bool)
     { }
 
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        virtual
-        override(ERC721URIStorage)
-        returns (string memory)
-    {
+    function tokenURI(uint256 tokenId) public view virtual override(ERC721URIStorage) returns (string memory) {
         return super.tokenURI(tokenId);
     }
 }

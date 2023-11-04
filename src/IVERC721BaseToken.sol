@@ -68,7 +68,10 @@ contract IVERC721BaseToken is
         address _minter,
         string memory _name,
         string memory _symbol
-    ) ERC721(_name, _symbol) EIP712(_name, "1") {
+    )
+        ERC721(_name, _symbol)
+        EIP712(_name, "1")
+    {
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
         _grantRole(PAUSER_ROLE, _pauser);
         _grantRole(MINTER_ROLE, _minter);
@@ -84,11 +87,7 @@ contract IVERC721BaseToken is
      * @param _recipient The recipient of the item
      * @param _classId The class ID
      */
-    function awardItem(address _recipient, uint256 _classId)
-        external
-        onlyMinter(msg.sender)
-        returns (uint256)
-    {
+    function awardItem(address _recipient, uint256 _classId) external onlyMinter(msg.sender) returns (uint256) {
         if (mintedPerClass[_recipient][_classId] > maxMintablePerClass) {
             revert Errors.MaxMintablePerClassReached(_recipient, _classId, maxMintablePerClass);
         }
@@ -107,7 +106,10 @@ contract IVERC721BaseToken is
      * @param _recipients The recipients of the item
      * @param _classIds The class IDs
      */
-    function batchAwardItem(address[] memory _recipients, uint256[] memory _classIds)
+    function batchAwardItem(
+        address[] memory _recipients,
+        uint256[] memory _classIds
+    )
         external
         onlyMinter(msg.sender)
         returns (uint256[] memory)
@@ -148,7 +150,10 @@ contract IVERC721BaseToken is
         string memory _imagePointer,
         string memory _metadata,
         uint256 _supply
-    ) external onlyMinter(msg.sender) {
+    )
+        external
+        onlyMinter(msg.sender)
+    {
         uint256 id = ++classIds;
         totalClassesSupply += _supply;
 
@@ -178,7 +183,11 @@ contract IVERC721BaseToken is
      * @param _newTokenURI The new token URI 🚨 must be a pointer to a json object 🚨
      * @return The new token URI
      */
-    function updateTokenMetadata(uint256 _classId, uint256 _tokenId, string memory _newTokenURI)
+    function updateTokenMetadata(
+        uint256 _classId,
+        uint256 _tokenId,
+        string memory _newTokenURI
+    )
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
         returns (string memory)
@@ -200,15 +209,13 @@ contract IVERC721BaseToken is
      * @param _classId The class ID
      * @param _supply The new supply
      */
-    function setClassTokenSupply(uint256 _classId, uint256 _supply)
-        external
-        onlyMinter(msg.sender)
-    {
+    function setClassTokenSupply(uint256 _classId, uint256 _supply) external onlyMinter(msg.sender) {
         uint256 currentSupply = classes[_classId].supply;
         uint256 minted = classes[_classId].minted;
 
         if (_supply < currentSupply) {
-            // if the new supply is less than the current supply, we need to check if the new supply is less than the minted
+            // if the new supply is less than the current supply, we need to check if the new supply is less than the
+            // minted
             // if it is, then we need to revert
             if (_supply < minted) {
                 revert Errors.NewSupplyTooLow(minted, _supply);
@@ -246,9 +253,7 @@ contract IVERC721BaseToken is
      */
     function _baseURI() internal pure override returns (string memory) {
         // TODO: 🚨 update this when production ready 🚨
-        return string.concat(
-            "https://pharo.mypinata.cloud/ipfs/QmSnzdnhtCuJ6yztHmtYFT7eU2hFF17QNM6rsNohFn6csg/"
-        );
+        return string.concat("https://pharo.mypinata.cloud/ipfs/QmSnzdnhtCuJ6yztHmtYFT7eU2hFF17QNM6rsNohFn6csg/");
     }
 
     /**
@@ -296,7 +301,11 @@ contract IVERC721BaseToken is
      * Overrides
      */
 
-    function _update(address to, uint256 tokenId, address auth)
+    function _update(
+        address to,
+        uint256 tokenId,
+        address auth
+    )
         internal
         override(ERC721, ERC721Enumerable, ERC721Pausable, ERC721Votes)
         returns (address)
@@ -304,19 +313,17 @@ contract IVERC721BaseToken is
         return super._update(to, tokenId, auth);
     }
 
-    function _increaseBalance(address account, uint128 value)
+    function _increaseBalance(
+        address account,
+        uint128 value
+    )
         internal
         override(ERC721, ERC721Enumerable, ERC721Votes)
     {
         super._increaseBalance(account, value);
     }
 
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721, ERC721URIStorage)
-        returns (string memory)
-    {
+    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
         return super.tokenURI(tokenId);
     }
 

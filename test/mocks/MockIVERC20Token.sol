@@ -10,5 +10,7 @@ contract MockIVERC20Token is IVERC20BaseToken {
         address pauser,
         string memory name,
         string memory symbol
-    ) IVERC20BaseToken(defaultAdmin, minter, pauser, name, symbol) { }
+    )
+        IVERC20BaseToken(defaultAdmin, minter, pauser, name, symbol)
+    { }
 }

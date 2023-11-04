@@ -1,16 +1,24 @@
 [profile.default]
 src = "src"
 out = "out"
-libs = ["lib"]
+libs = ["lib", "node_modules"]
 broadcast = "broadcast"
+auto_detect_solc = false
+bytecode_hash = "none"
+emv_version = "paris"
+fuzz = { runs = 1_000 }
+optimizer = true
+optimizer_runs = 10_000
+solc = "0.8.22"
+test = "test"
 
 [rpc_endpoints]
+localhost = "http://localhost:8545"
 arbitrumGoerli = "${ARBITRUM_GOERLI_RPC_URL}"
 mainnet = "${MAINNET_RPC_URL}"
 
 [etherscan]
 arbitrumGoerli = { key = "${ARBITRUM_API_KEY}" }
-
 
 [fuzz]
 runs = 256
@@ -31,9 +39,14 @@ include_push_bytes = true
 shrink_sequence = true
 
 [fmt]
-line_length = 100
-tab_width = 4
 bracket_spacing = true
+int_types = "long"
+line_length = 120
+multiline_func_header = "all"
+number_underscore = "thousands"
+quote_style = "double"
+tab_width = 4
+wrap_comments = true
 
 # Remappings in remappings.txt
 

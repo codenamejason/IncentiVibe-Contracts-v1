@@ -35,9 +35,7 @@ contract Will4USNFTTest is Test {
 
         vm.startPrank(deployerAddress);
         nftContract.addCampaignMember(deployerAddress);
-        nftContract.addClass(
-            "name", "description", "imagePointer", "https://a_new_pointer_to_json_object.io", 1e7
-        );
+        nftContract.addClass("name", "description", "imagePointer", "https://a_new_pointer_to_json_object.io", 1e7);
         nftContract.awardCampaignItem(makeAddr("recipient1"), 1);
         vm.stopPrank();
     }
@@ -109,11 +107,7 @@ contract Will4USNFTTest is Test {
         nftContract.addCampaignMember(makeAddr("member1"));
 
         vm.stopPrank();
-        assertEq(
-            nftContract.hasRole(MINTER_ROLE, makeAddr("member1")),
-            true,
-            "Member should have MINTER_ROLE"
-        );
+        assertEq(nftContract.hasRole(MINTER_ROLE, makeAddr("member1")), true, "Member should have MINTER_ROLE");
     }
 
     function test_removeCampaignMember() public {
@@ -121,11 +115,7 @@ contract Will4USNFTTest is Test {
 
         nftContract.removeCampaignMember(makeAddr("member1"));
         vm.stopPrank();
-        assertEq(
-            nftContract.hasRole(MINTER_ROLE, makeAddr("member1")),
-            false,
-            "Member should NOT have MINTER_ROLE"
-        );
+        assertEq(nftContract.hasRole(MINTER_ROLE, makeAddr("member1")), false, "Member should NOT have MINTER_ROLE");
     }
 
     function test_redeem() public {
@@ -157,9 +147,7 @@ contract Will4USNFTTest is Test {
         vm.startPrank(deployerAddress);
         vm.expectEmit(true, true, true, true);
         emit ClassAdded(2, "https://a_new_pointer_to_json_object.io");
-        nftContract.addClass(
-            "name2", "description", "imagePointer", "https://a_new_pointer_to_json_object.io", 1e7
-        );
+        nftContract.addClass("name2", "description", "imagePointer", "https://a_new_pointer_to_json_object.io", 1e7);
 
         vm.stopPrank();
         (
@@ -188,9 +176,7 @@ contract Will4USNFTTest is Test {
     function test_revert_addClass_Unauthorized() public {
         vm.prank(makeAddr("chad"));
         vm.expectRevert();
-        nftContract.addClass(
-            "name2", "description", "imagePointer", "https://a_new_pointer_to_json_object.io", 1e7
-        );
+        nftContract.addClass("name2", "description", "imagePointer", "https://a_new_pointer_to_json_object.io", 1e7);
     }
 
     function test_getTotalSupplyForClass() public {

@@ -13,8 +13,7 @@ contract IVERC20BaseTokenTest is Test {
 
     function setUp() public {
         deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
-        tokenContract =
-        new IVERC20BaseToken(deployerAddress, deployerAddress, deployerAddress, "TestToken", "TST");
+        tokenContract = new IVERC20BaseToken(deployerAddress, deployerAddress, deployerAddress, "TestToken", "TST");
     }
 
     function test_deploy() public {

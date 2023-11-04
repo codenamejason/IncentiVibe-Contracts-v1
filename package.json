@@ -1,0 +1,48 @@
+{
+    "name": "incentivibe",
+    "description": "incentivibe v1 contracts",
+    "version": "1.0.0",
+    "author": {
+      "name": "IncentiVibe",
+      "url": "https://incentivibe.xyz"
+    },
+    "bugs": {
+      "url": "https://github.com/codenamejason/IncentiVibe-Contracts-v1/issues"
+    },
+    "devDependencies": {
+      "prettier": "^3.0.0",
+      "solhint": "^3.4.1"
+    },
+    "dependencies": {
+      "@openzeppelin/contracts": "4.9.2",
+      "@prb/math": "4.0.1",
+      "@sablier/v2-core": "1.0.2",
+      "@sablier/v2-periphery": "1.0.3"
+    },
+    "homepage": "https://github.com/codenamejason/IncentiVibe-Contracts-v1",
+    "keywords": [
+      "asset-streaming",
+      "blockchain",
+      "cryptoasset-streaming",
+      "cryptoassets",
+      "ethereum",
+      "foundry",
+      "money-streaming",
+      "real-time-finance",
+      "sablier",
+      "sablier-v2",
+      "smart-contracts",
+      "solidity",
+      "token-streaming"
+    ],
+    "license": "GPL-3.0-or-later",
+    "private": true,
+    "repository": "github.com:codenamejason/IncentiVibe-Contracts-v1",
+    "scripts": {
+      "clean": "rimraf cache out",
+      "lint": "bun run lint:sol && bun run prettier:check",
+      "lint:sol": "forge fmt --check && bun solhint \"{script,src,test}/**/*.sol\"",
+      "prettier:check": "prettier --check \"**/*.{json,md,yml}\"",
+      "prettier:write": "prettier --write \"**/*.{json,md,yml}\""
+    }
+  }

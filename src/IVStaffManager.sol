@@ -15,9 +15,7 @@ contract IVStaffManager is AccessControl, Recover {
     mapping(address => Structs.Staff) public staff;
 
     modifier onlyAdmin() {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "IVOccurrenceManager: caller is not an admin"
-        );
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "IVOccurrenceManager: caller is not an admin");
         _;
     }
 
@@ -34,7 +32,10 @@ contract IVStaffManager is AccessControl, Recover {
         address _member,
         // uint256[] memory _levels,
         Structs.Metadata memory _metadata
-    ) external onlyAdmin {
+    )
+        external
+        onlyAdmin
+    {
         Structs.Staff memory _staff = Structs.Staff({
             id: keccak256(abi.encodePacked(_member)),
             member: _member,
@@ -56,7 +57,10 @@ contract IVStaffManager is AccessControl, Recover {
         address _member,
         // uint256[] memory _levels,
         Structs.Metadata memory _metadata
-    ) external onlyAdmin {
+    )
+        external
+        onlyAdmin
+    {
         Structs.Staff memory _staff = Structs.Staff({
             id: keccak256(abi.encodePacked(_member)),
             member: _member,

@@ -29,9 +29,7 @@ contract IVERC721BaseTokenTest is Test {
 
     function test_mint() public {
         vm.startPrank(deployerAddress);
-        tokenContract.addClass(
-            "Volunteer", "Test volunteer class", "https://yourpointer", "", 500000
-        );
+        tokenContract.addClass("Volunteer", "Test volunteer class", "https://yourpointer", "", 500_000);
         tokenContract.awardItem(makeAddr("recipient1"), 1);
         vm.stopPrank();
 

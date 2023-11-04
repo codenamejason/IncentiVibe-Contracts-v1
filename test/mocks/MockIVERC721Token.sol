@@ -10,5 +10,7 @@ contract MockIVERC721Token is IVERC721BaseToken {
         address pauser,
         string memory name,
         string memory symbol
-    ) IVERC721BaseToken(defaultAdmin, minter, pauser, name, symbol) { }
+    )
+        IVERC721BaseToken(defaultAdmin, minter, pauser, name, symbol)
+    { }
 }

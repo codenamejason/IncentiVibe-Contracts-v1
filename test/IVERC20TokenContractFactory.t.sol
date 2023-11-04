@@ -28,9 +28,8 @@ contract IVERC20TokenContractFactoryTest is Test {
     }
 
     function test_deploy_shit() public {
-        address deployedAddress = factoryInstance.create(
-            deployerAddress, deployerAddress, deployerAddress, "TestToken", "TST"
-        );
+        address deployedAddress =
+            factoryInstance.create(deployerAddress, deployerAddress, deployerAddress, "TestToken", "TST");
 
         assertNotEq(deployedAddress, address(0));
         vm.startPrank(deployerAddress);
@@ -42,9 +41,7 @@ contract IVERC20TokenContractFactoryTest is Test {
     function testRevert_deploy_UNAUTHORIZED() public {
         vm.expectRevert();
         vm.prank(makeAddr("alice"));
-        factoryInstance.create(
-            deployerAddress, deployerAddress, deployerAddress, "TestToken", "TST"
-        );
+        factoryInstance.create(deployerAddress, deployerAddress, deployerAddress, "TestToken", "TST");
     }
 
     function test_setDeployer() public {

@@ -100,7 +100,10 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         return occurrences[_occurenceId];
     }
 
-    function hostOccurrence(bytes32 _occurenceId, address[] memory _attendees)
+    function hostOccurrence(
+        bytes32 _occurenceId,
+        address[] memory _attendees
+    )
         external
         onlyCreator(_occurenceId)
         occurrenceExists(_occurenceId)
@@ -109,7 +112,10 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         occurrences[_occurenceId].status = Enums.Status.Hosted;
     }
 
-    function recognizeOccurrence(bytes32 _occurenceId, Structs.Metadata memory _content)
+    function recognizeOccurrence(
+        bytes32 _occurenceId,
+        Structs.Metadata memory _content
+    )
         external
         onlyStaff
         occurrenceExists(_occurenceId)
@@ -118,7 +124,10 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         occurrences[_occurenceId].status = Enums.Status.Recognized;
     }
 
-    function getStaffMemberByOccurrenceId(bytes32 _occurenceId, address _member)
+    function getStaffMemberByOccurrenceId(
+        bytes32 _occurenceId,
+        address _member
+    )
         external
         view
         occurrenceExists(_occurenceId)
@@ -162,11 +171,7 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         return _occurrences;
     }
 
-    function getOccurrenceById(bytes32 _occurenceIdId)
-        external
-        view
-        returns (Structs.Occurrence memory)
-    {
+    function getOccurrenceById(bytes32 _occurenceIdId) external view returns (Structs.Occurrence memory) {
         return occurrences[_occurenceIdId];
     }
 
