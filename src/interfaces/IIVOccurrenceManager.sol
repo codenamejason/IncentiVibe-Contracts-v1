@@ -35,18 +35,18 @@ interface IIVOccurrenceManager {
         external
         view
         returns (Structs.Occurrence memory);
-    function hostOccurrence(bytes32 _occurenceId, address[] memory _attendees) external;
-    function recognizeOccurrence(bytes32 _occurenceId, Structs.Metadata memory _content) external;
-    function getStaffMemberByOccurrenceId(bytes32 _occurenceId, address _member)
+    function hostOccurrence(bytes32 occurenceId, address[] memory) external;
+    function recognizeOccurrence(bytes32 occurenceId, Structs.Metadata memory) external;
+    function getStaffMemberByOccurrenceId(bytes32 occurenceId, address)
         external
         view
         returns (Structs.Staff memory);
-    function getStaffMembersForOccurrenceId(bytes32 _occurenceId)
+    function getStaffMembersForOccurrenceId(bytes32 occurenceId)
         external
         view
         returns (Structs.Staff[] memory);
     function getOccurrences() external view returns (Structs.Occurrence[] memory);
-    function getOccurrenceById(bytes32 _occurenceIdId)
+    function getOccurrenceById(bytes32 occurenceIdId)
         external
         view
         returns (Structs.Occurrence memory);

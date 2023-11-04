@@ -21,8 +21,15 @@ library Structs {
         Enums.Status status;
     }
 
+    struct Attendee {
+        bytes32 id;
+        address attendee;
+        Metadata metadata;
+        Enums.Status status;
+    }
+
     struct Occurrence {
-        // keccak256(abi.encodePacked(_name, _start, _end))
+        // keccak256(abi.encodePacked(_name, _creator))
         bytes32 id;
         address creator;
         string name;
@@ -34,8 +41,8 @@ library Structs {
         Enums.Status status;
         address[] staff;
         Metadata metadata;
-        address[] attendees;
     }
+    // Attendee[] attendees;
 
     struct Class {
         uint256 id;

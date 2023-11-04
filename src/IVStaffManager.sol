@@ -4,10 +4,11 @@ pragma solidity 0.8.20;
 import { Enums } from "./library/Enums.sol";
 import { Structs } from "../src/library/Structs.sol";
 import { Errors } from "../src/library/Errors.sol";
+import { Recover } from "../src/library/Recover.sol";
 
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract IVStaffManager is AccessControl {
+contract IVStaffManager is AccessControl, Recover {
     bytes32 public constant STAFF_ROLE = keccak256("STAFF_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 

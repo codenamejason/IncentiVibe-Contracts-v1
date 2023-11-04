@@ -16,13 +16,13 @@ import { Errors } from "./library/Errors.sol";
  * @author @codenamejason <jax@jaxdoder.xyz>
  */
 contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
-    bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
-
     mapping(bytes32 => Structs.Occurrence) public occurrences;
+    mapping(bytes32 => address[]) public attendeesAtEvent;
+    mapping(bytes32 => mapping(bytes32 => Structs.Attendee)) public attendeeAtEvent;
     uint256 private _occurrenceCount;
 
-    modifier onlyCreator() {
-        if (!hasRole(CREATOR_ROLE, msg.sender)) {
+    modifier onlyCreator(bytes32 _occurenceId) {
+        if (occurrences[_occurenceId].creator != msg.sender) {
             revert Errors.NotCreator(msg.sender);
         }
         _;
@@ -61,8 +61,9 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         address[] memory _staff,
         Structs.Metadata memory _metadata
     ) external returns (bytes32) {
-        return
-            _createOccurrence(_name, _description, _start, _end, _price, _token, _staff, _metadata);
+        return _createOccurrence(
+            _name, _description, _start, _end, _price, _token, _staff, _metadata, msg.sender
+        );
     }
 
     function updateOccurrence(
@@ -75,9 +76,18 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         address _token,
         address[] memory _staff,
         Structs.Metadata memory _metadata
-    ) external onlyCreator occurrenceExists(_occurenceId) {
+    ) external onlyCreator(_occurenceId) occurrenceExists(_occurenceId) {
         return _updateOccurrence(
-            _occurenceId, _name, _description, _start, _end, _price, _token, _staff, _metadata
+            _occurenceId,
+            _name,
+            _description,
+            _start,
+            _end,
+            _price,
+            _token,
+            _staff,
+            _metadata,
+            msg.sender
         );
     }
 
@@ -92,9 +102,10 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
 
     function hostOccurrence(bytes32 _occurenceId, address[] memory _attendees)
         external
-        onlyCreator
+        onlyCreator(_occurenceId)
         occurrenceExists(_occurenceId)
     {
+        attendeesAtEvent[_occurenceId] = _attendees;
         occurrences[_occurenceId].status = Enums.Status.Hosted;
     }
 
@@ -103,6 +114,7 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         onlyStaff
         occurrenceExists(_occurenceId)
     {
+        occurrences[_occurenceId].metadata = _content;
         occurrences[_occurenceId].status = Enums.Status.Recognized;
     }
 
@@ -129,6 +141,14 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         }
 
         return _staff;
+    }
+
+    function getAttendeesByOccurrenceId(bytes32 _occurenceId)
+        external
+        view
+        returns (address[] memory)
+    {
+        return attendeesAtEvent[_occurenceId];
     }
 
     function getOccurrences() external view returns (Structs.Occurrence[] memory) {
@@ -162,10 +182,11 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         uint256 _price,
         address _token,
         address[] memory _staff,
-        Structs.Metadata memory _metadata
+        Structs.Metadata memory _metadata,
+        address _sender
     ) internal returns (bytes32) {
         Structs.Occurrence memory _occurenceId = Structs.Occurrence({
-            id: keccak256(abi.encodePacked(_name, _start, _end)),
+            id: keccak256(abi.encodePacked(_name, _sender)),
             creator: msg.sender,
             name: _name,
             description: _description,
@@ -175,8 +196,7 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
             token: _token,
             status: Enums.Status.Pending,
             staff: _staff,
-            metadata: _metadata,
-            attendees: new address[](9999)
+            metadata: _metadata
         });
 
         occurrences[_occurenceId.id] = _occurenceId;
@@ -194,7 +214,8 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         uint256 _price,
         address _token,
         address[] memory _staff,
-        Structs.Metadata memory _metadata
+        Structs.Metadata memory _metadata,
+        address _sender
     ) internal {
         Structs.Occurrence memory _occurence = occurrences[_occurenceId];
 

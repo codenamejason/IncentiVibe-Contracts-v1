@@ -181,7 +181,10 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      * @param _occurrenceId The occurrence ID
      * @param _tokenId The token ID
      */
-    function redeem(bytes32 _occurrenceId, uint256 _tokenId) external onlyCampaingnMember(msg.sender) {
+    function redeem(bytes32 _occurrenceId, uint256 _tokenId)
+        external
+        onlyCampaingnMember(msg.sender)
+    {
         if (super.ownerOf(_tokenId) == address(0)) {
             revert Errors.InvalidTokenId(_tokenId);
         }
