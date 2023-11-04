@@ -34,7 +34,7 @@ contract IVERC721BaseToken is
 
     mapping(uint256 => Structs.Class) public classes;
     mapping(address => mapping(uint256 => uint256)) public mintedPerClass;
-    
+
     /**
      * Events ************
      */

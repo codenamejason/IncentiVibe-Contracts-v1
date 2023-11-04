@@ -8,6 +8,12 @@ contract Enums {
         Recognized,
         Hosted,
         Inactive,
-        Rejected
+        Rejected,
+        Canceled,
+        Completed,
+        Expired,
+        Redeemed,
+        Refunded,
+        None
     }
 }
