@@ -6,6 +6,7 @@ broadcast = "broadcast"
 
 [rpc_endpoints]
 arbitrumGoerli = "${ARBITRUM_GOERLI_RPC_URL}"
+mainnet = "${MAINNET_RPC_URL}"
 
 [etherscan]
 arbitrumGoerli = { key = "${ARBITRUM_API_KEY}" }

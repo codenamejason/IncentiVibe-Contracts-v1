@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: true
 
-    name: Will4USNFT Foundry project
+    name: IncentiVibe Foundry Contract Tests
     runs-on: ubuntu-latest
     env:
       ARBITRUM_GOERLI_RPC_URL: ${{ secrets.ARBITRUM_GOERLI_RPC_URL }}
@@ -40,5 +40,5 @@ jobs:
         env:
           DEPLOYER_ADDRESS: ${{ secrets.DEPLOYER_ADDRESS }}
         run: |
-          forge test -vvv
+          forge test -vvv --no-match-contract LockupLinearStreamCreatorTest
         id: test
