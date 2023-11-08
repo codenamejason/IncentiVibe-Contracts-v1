@@ -27,7 +27,6 @@ contract LockupLinearStreamCreator {
         LockupLinear.CreateWithDurations memory params;
 
         // Declare the function parameters
-        params.sender = msg.sender; // The sender will be able to cancel the stream
         params.recipient = address(0xcafe); // The recipient of the streamed assets
         params.totalAmount = uint128(totalAmount); // Total amount is the amount inclusive of all fees
         params.asset = DAI; // The streaming asset
