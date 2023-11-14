@@ -76,6 +76,10 @@ contract IVStaffManager is AccessControl, Recover {
         staff[_staff.member] = _staff;
     }
 
+    function removeStaffMember(address _member) external onlyAdmin {
+        delete staff[_member];
+    }
+
     function updateStaffMemberStatus(address _member, Enums.Status _status) external onlyAdmin {
         Structs.Staff memory _staff = staff[_member];
         _staff.status = _status;

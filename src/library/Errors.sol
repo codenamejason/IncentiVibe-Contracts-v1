@@ -12,4 +12,6 @@ library Errors {
     error ZeroAddress();
     error ZeroAmount();
     error TransferFailed();
+    error GatingEnabled();
+    error InvalidDates(uint256 start, uint256 end);
 }
