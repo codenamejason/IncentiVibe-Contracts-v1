@@ -14,4 +14,9 @@ library Errors {
     error TransferFailed();
     error GatingEnabled();
     error InvalidDates(uint256 start, uint256 end);
+    error MustAssignAttentees();
+    error MustAssignStaff();
+    error MustAssignCreator();
+    error MustAssignToken();
+    error MustAssignPrice();    
 }

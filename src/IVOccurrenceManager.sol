@@ -222,9 +222,9 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         Structs.Occurrence memory occurrence = occurrences[_occurenceId];
         Structs.Staff[] memory _staff = new Structs.Staff[](occurrence.staff.length);
 
-        // for (uint256 i = 0; i < occurrence.staff.length; i++) {
-        //     _staff[i] = staff[occurrence.staff[i]];
-        // }
+        for (uint256 i = 0; i < occurrence.staff.length; i++) {
+            _staff[i] = staff[occurrence.staff[i]];
+        }
 
         return _staff;
     }
@@ -348,7 +348,8 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         uint256 _price,
         address _token,
         address[] memory _staff,
-        Structs.Metadata memory _metadata
+        Structs.Metadata memory _metadata,
+        address[] memory _attendees
     )
         internal
     {
@@ -363,6 +364,7 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         _occurence.token = _token;
         _occurence.staff = _staff;
         _occurence.metadata = _metadata;
+        _occurence.attendees = _attendees;
 
         occurrences[_occurenceId] = _occurence;
     }
