@@ -60,10 +60,11 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         address _token,
         address[] memory _staff,
         Structs.Metadata memory _metadata
-    ) external returns (bytes32) {
-        return _createOccurrence(
-            _name, _description, _start, _end, _price, _token, _staff, _metadata, msg.sender
-        );
+    )
+        external
+        returns (bytes32)
+    {
+        return _createOccurrence(_name, _description, _start, _end, _price, _token, _staff, _metadata, msg.sender);
     }
 
     /**
@@ -88,19 +89,15 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         uint256 _price,
         address _token,
         address[] memory _staff,
-        Structs.Metadata memory _metadata
-    ) external onlyCreator(_occurenceId) occurrenceExists(_occurenceId) {
+        Structs.Metadata memory _metadata,
+        address[] memory _attendees
+    )
+        external
+        onlyCreator(_occurenceId)
+        occurrenceExists(_occurenceId)
+    {
         return _updateOccurrence(
-            _occurenceId,
-            _name,
-            _description,
-            _start,
-            _end,
-            _price,
-            _token,
-            _staff,
-            _metadata,
-            msg.sender
+            _occurenceId, _name, _description, _start, _end, _price, _token, _staff, _metadata, _attendees
         );
     }
 
@@ -161,8 +158,8 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
      *
      * @param _occurenceId The id of the occurrence
      */
-    function cancelOccurrence(bytes32 _occurenceId) external onlyCreator occurrenceExists(_occurenceId) {
-        occurrences[_occurenceId].status = Enums.Status.Cancelled;
+    function cancelOccurrence(bytes32 _occurenceId) external onlyCreator(_occurenceId) occurrenceExists(_occurenceId) {
+        occurrences[_occurenceId].status = Enums.Status.Canceled;
     }
 
     function updateOccurrenceDates(
@@ -171,7 +168,7 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         uint256 _end
     )
         external
-        onlyCreator
+        onlyCreator(_occurenceId)
         occurrenceExists(_occurenceId)
     {
         _checkDates(_start, _end);
@@ -184,7 +181,7 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
      *
      * @param _occurenceId The id of the occurrence
      */
-    function rejectOccurrence(bytes32 _occurenceId) external onlyCreator occurrenceExists(_occurenceId) {
+    function rejectOccurrence(bytes32 _occurenceId) external onlyCreator(_occurenceId) occurrenceExists(_occurenceId) {
         occurrences[_occurenceId].status = Enums.Status.Rejected;
     }
 
@@ -229,19 +226,7 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         return _staff;
     }
 
-    function getAttendeesByOccurrenceId(bytes32 _occurenceId)
-        external
-        view
-        returns (address[] memory)
-    {
-        return attendeesAtEvent[_occurenceId];
-    }
-
-    function getAttendeesByOccurrenceId(bytes32 _occurenceId)
-        external
-        view
-        returns (address[] memory)
-    {
+    function getAttendeesByOccurrenceId(bytes32 _occurenceId) external view returns (address[] memory) {
         return attendeesAtEvent[_occurenceId];
     }
 
@@ -304,7 +289,7 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         returns (bytes32)
     {
         _checkDates(_start, _end);
-        Structs.Occurrence memory _occurenceId = Structs.Occurrence({
+        Structs.Occurrence memory newOccurrence = Structs.Occurrence({
             id: keccak256(abi.encodePacked(_name, _sender)),
             creator: msg.sender,
             name: _name,
@@ -315,15 +300,14 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
             token: _token,
             status: Enums.Status.Pending,
             staff: _staff,
-            metadata: _metadata
+            metadata: _metadata,
+            attendees: new address[](0)
         });
 
-        occurrences[_occurenceId.id] = _occurenceId;
+        occurrences[newOccurrence.id] = newOccurrence;
         _occurrenceCount++;
 
-        _grantRole(CREATOR_ROLE, _sender);
-
-        return _occurenceId.id;
+        return newOccurrence.id;
     }
 
     /**

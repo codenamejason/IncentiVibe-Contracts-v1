@@ -10,6 +10,7 @@ import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol"
 
 contract IVStaffManager is AccessControl, Recover {
     bytes32 public constant STAFF_ROLE = keccak256("STAFF_ROLE");
+    bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     mapping(address => Structs.Staff) public staff;

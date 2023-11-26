@@ -23,7 +23,7 @@ contract IVOccurrenceManagerTest is Test {
         staff = new address[](1);
         staff[0] = makeAddr("staff");
 
-        attendees = new address[](1);
+        attendees = new address[](2);
         attendees[0] = makeAddr("attendee");
         attendees[1] = makeAddr("attendee2");
     }
@@ -56,7 +56,8 @@ contract IVOccurrenceManagerTest is Test {
             4,
             address(makeAddr("token2")),
             staff,
-            Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" })
+            Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" }),
+            attendees
         );
 
         (bytes32 _occurrence2Id,, string memory name, string memory description, uint256 start,,,,,) =
@@ -81,7 +82,8 @@ contract IVOccurrenceManagerTest is Test {
             4,
             address(makeAddr("token2")),
             staff,
-            Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" })
+            Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" }),
+            attendees
         );
     }
 
@@ -97,7 +99,8 @@ contract IVOccurrenceManagerTest is Test {
             4,
             address(makeAddr("token2")),
             staff,
-            Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" })
+            Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" }),
+            attendees
         );
     }
 
@@ -114,17 +117,9 @@ contract IVOccurrenceManagerTest is Test {
             4,
             address(makeAddr("token2")),
             staff,
-            Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" })
+            Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" }),
+            attendees
         );
-    }
-
-    function test_hostOccurrence() public {
-        bytes32 _occurrence = __create_occurrence();
-
-        attendees[0] = makeAddr("attendee");
-
-        vm.prank(creator);
-        ivOccurrenceManager.hostOccurrence(_occurrence, attendees);
     }
 
     function testRevert_hostOccurrence_NotCreator() public {
@@ -137,7 +132,6 @@ contract IVOccurrenceManagerTest is Test {
     }
 
     function testRevert_hostOccurrence_OccurrenceDoesNotExist() public {
-
         vm.prank(creator);
         vm.expectRevert();
         ivOccurrenceManager.hostOccurrence(bytes32("0x1234"), attendees);
@@ -163,8 +157,7 @@ contract IVOccurrenceManagerTest is Test {
 
         vm.prank(staff[0]);
         ivOccurrenceManager.recognizeOccurrence(
-            _occurrence,
-            Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" })
+            _occurrence, Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" })
         );
     }
 
@@ -194,10 +187,6 @@ contract IVOccurrenceManagerTest is Test {
         assertEq(name, "name");
         assertEq(description, "description");
         assertEq(start, 1);
-    }
-
-    function test_updateOccurrence() public {
-        vm.startPrank(makeAddr("creator"));
     }
 
     function test_getOccurrence() public {

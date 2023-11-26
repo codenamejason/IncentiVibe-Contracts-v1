@@ -41,6 +41,7 @@ library Structs {
         Enums.Status status;
         address[] staff;
         Metadata metadata;
+        address[] attendees;
     }
     // Attendee[] attendees;
 
