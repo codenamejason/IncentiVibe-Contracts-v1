@@ -21,9 +21,12 @@ jobs:
     env:
       ARBITRUM_GOERLI_RPC_URL: ${{ secrets.ARBITRUM_GOERLI_RPC_URL }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
+      - uses: oven-sh/setup-bun@v1
+
+      - run: bun install
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
