@@ -28,6 +28,23 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         _;
     }
 
+    /**
+     * I believe we need a modifier that checks for the right NFTs. 
+     * I don't know how to check the user's wallet information...:
+     * modifier onlyRole(bytes32 _roleId) {
+     *     for (k==0; k < len(msg.sender.wallet.NFTs); k++) {
+     *         if (roles[msg.sender.wallet.NFTs[k]] != True) {
+     *             revert Errors.WrongRole(msg.sender);
+     *         }
+     *     }
+     *     _;
+     * }
+     * Thinking about the here and now, since it's being manually operated for FWD DMV work, 
+     * the user can check the role
+     * 
+     * Also need an onlyStaff() modifier.
+    */
+
     modifier occurrenceExists(bytes32 _occurenceIdId) {
         if (occurrences[_occurenceIdId].id != _occurenceIdId) {
             revert Errors.OccurrenceDoesNotExist(_occurenceIdId);
@@ -60,7 +77,9 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         address _token,
         address[] memory _staff,
         Structs.Metadata memory _metadata
-    ) external returns (bytes32) {
+    ) external 
+// onlyRole(_roleID) 
+    returns (bytes32) {
         return _createOccurrence(
             _name, _description, _start, _end, _price, _token, _staff, _metadata, msg.sender
         );
@@ -100,6 +119,7 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         return occurrences[_occurenceId];
     }
 
+    // records that an event has been hosted.
     function hostOccurrence(bytes32 _occurenceId, address[] memory _attendees)
         external
         onlyCreator(_occurenceId)
@@ -156,6 +176,7 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
 
         for (uint256 i = 0; i < _occurrenceCount; i++) {
             // FIXME: this is not the correct way to do this
+            // YOU NEED A LIST OF ADDRESSES TO GO WITH THE MAP
             _occurrences[i] = occurrences[keccak256(abi.encodePacked(i))];
         }
 
@@ -200,6 +221,7 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         });
 
         occurrences[_occurenceId.id] = _occurenceId;
+        _occurenceIds += _occurenceId; // add the ID to the list... remove?
         _occurrenceCount++;
 
         return _occurenceId.id;
