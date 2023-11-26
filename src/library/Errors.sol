@@ -18,5 +18,5 @@ library Errors {
     error MustAssignStaff();
     error MustAssignCreator();
     error MustAssignToken();
-    error MustAssignPrice();    
+    error MustAssignPrice();
 }

@@ -2,7 +2,7 @@
 pragma solidity 0.8.22;
 
 import { Test, console2, StdUtils } from "forge-std/Test.sol";
-import { Will4USNFT } from "../src/Will4USNFT.sol";
+import { Will4USNFT } from "../src/campaigns/Will4USNFT.sol";
 
 /// @notice This contract is used to test the Will4USNFT contract
 contract Will4USNFTTest is Test {
@@ -74,7 +74,7 @@ contract Will4USNFTTest is Test {
         address[] memory recipients = new address[](2);
         recipients[0] = makeAddr("recipient1");
         recipients[1] = makeAddr("recipient2");
-        string[] memory tokenURIs = new string[](2);
+        // string[] memory tokenURIs = new string[](2);
         uint256[] memory classIds = new uint256[](2);
         classIds[0] = 1;
         classIds[1] = 1;

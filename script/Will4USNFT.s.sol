@@ -4,7 +4,7 @@ pragma solidity 0.8.22;
 import { Script } from "forge-std/Script.sol";
 // import { Test, console2 } from "forge-std/Test.sol";
 
-import { Will4USNFT } from "../src/Will4USNFT.sol";
+import { Will4USNFT } from "../src/campaigns/Will4USNFT.sol";
 
 /// @notice This script is used to deploy the Will4USNFT contract
 /// @dev Use this to run
