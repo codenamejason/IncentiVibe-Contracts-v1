@@ -20,8 +20,10 @@ contract IVStaffManager is AccessControl, Recover {
         _;
     }
 
-    modifier onlyStaff() {
-        require(hasRole(STAFF_ROLE, msg.sender), "IVOccurrenceManager: caller is not a staff");
+    modifier onlyStaff(address _staff) {
+        if (staff[_staff].status != Enums.Status.Active) {
+            revert Errors.OnlyStaff();
+        }
         _;
     }
 

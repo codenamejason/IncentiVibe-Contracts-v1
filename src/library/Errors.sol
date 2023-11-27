@@ -20,4 +20,5 @@ library Errors {
     error MustAssignToken();
     error MustAssignPrice();
     error NoAttendees();
+    error OnlyStaff();
 }

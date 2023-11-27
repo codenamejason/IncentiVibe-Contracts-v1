@@ -159,7 +159,7 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         Structs.Metadata memory _content
     )
         external
-        onlyStaff
+        onlyStaff(msg.sender)
         occurrenceExists(_occurenceId)
     {
         occurrences[_occurenceId].metadata = _content;
@@ -328,6 +328,14 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
 
         occurrences[newOccurrence.id] = newOccurrence;
         _occurrenceCount++;
+
+        // Structs.Staff memory _staffMember = staff[_sender];
+        // _staffMember.id = keccak256(abi.encode(newId, _sender));
+        // _staffMember.member = _sender;
+        // _staffMember.metadata = Structs.Metadata({ protocol: 1, pointer: "0x7128364591823674872ghsdfafjdhf" });
+        // _staffMember.status = Enums.Status.Active;
+
+        // staff[_sender] = _staffMember;
 
         return newOccurrence.id;
     }
