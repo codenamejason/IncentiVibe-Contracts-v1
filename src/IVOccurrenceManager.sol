@@ -21,9 +21,9 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
     mapping(bytes32 => mapping(bytes32 => Structs.Attendee)) public attendeeAtEvent;
     uint256 private _occurrenceCount;
 
-    modifier onlyCreator(bytes32 _occurenceId) {
-        if (occurrences[_occurenceId].creator != msg.sender) {
-            revert Errors.NotCreator(msg.sender);
+    modifier onlyCreator(bytes32 _occurenceId, address _creator) {
+        if (occurrences[_occurenceId].creator != _creator) {
+            revert Errors.NotCreator(_creator);
         }
         _;
     }
@@ -64,6 +64,8 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         external
         returns (bytes32)
     {
+        _checkDates(_start, _end);
+
         return _createOccurrence(_name, _description, _start, _end, _price, _token, _staff, _metadata, msg.sender);
     }
 
@@ -93,9 +95,11 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         address[] memory _attendees
     )
         external
-        onlyCreator(_occurenceId)
+        onlyCreator(_occurenceId, msg.sender)
         occurrenceExists(_occurenceId)
     {
+        _checkDates(_start, _end);
+
         return _updateOccurrence(
             _occurenceId, _name, _description, _start, _end, _price, _token, _staff, _metadata, _attendees
         );
@@ -127,9 +131,19 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         address[] memory _attendees
     )
         external
-        onlyCreator(_occurenceId)
+        onlyCreator(_occurenceId, msg.sender)
         occurrenceExists(_occurenceId)
     {
+        if (_attendees.length == 0) {
+            revert Errors.NoAttendees();
+        }
+
+        for (uint256 i = 0; i < _attendees.length; i++) {
+            if (_attendees[i] == address(0)) {
+                revert Errors.ZeroAddress();
+            }
+        }
+
         attendeesAtEvent[_occurenceId] = _attendees;
         occurrences[_occurenceId].status = Enums.Status.Hosted;
         occurrences[_occurenceId].attendees = _attendees;
@@ -158,7 +172,11 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
      *
      * @param _occurenceId The id of the occurrence
      */
-    function cancelOccurrence(bytes32 _occurenceId) external onlyCreator(_occurenceId) occurrenceExists(_occurenceId) {
+    function cancelOccurrence(bytes32 _occurenceId)
+        external
+        onlyCreator(_occurenceId, msg.sender)
+        occurrenceExists(_occurenceId)
+    {
         occurrences[_occurenceId].status = Enums.Status.Canceled;
     }
 
@@ -168,7 +186,7 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         uint256 _end
     )
         external
-        onlyCreator(_occurenceId)
+        onlyCreator(_occurenceId, msg.sender)
         occurrenceExists(_occurenceId)
     {
         _checkDates(_start, _end);
@@ -181,7 +199,11 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
      *
      * @param _occurenceId The id of the occurrence
      */
-    function rejectOccurrence(bytes32 _occurenceId) external onlyCreator(_occurenceId) occurrenceExists(_occurenceId) {
+    function rejectOccurrence(bytes32 _occurenceId)
+        external
+        onlyCreator(_occurenceId, msg.sender)
+        occurrenceExists(_occurenceId)
+    {
         occurrences[_occurenceId].status = Enums.Status.Rejected;
     }
 
@@ -288,21 +310,21 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         internal
         returns (bytes32)
     {
-        _checkDates(_start, _end);
-        Structs.Occurrence memory newOccurrence = Structs.Occurrence({
-            id: keccak256(abi.encodePacked(_name, _sender)),
-            creator: msg.sender,
-            name: _name,
-            description: _description,
-            start: _start,
-            end: _end,
-            price: _price,
-            token: _token,
-            status: Enums.Status.Pending,
-            staff: _staff,
-            metadata: _metadata,
-            attendees: new address[](0)
-        });
+        address[] memory _attendees = new address[](0);
+        bytes32 newId = keccak256(abi.encode(_name, _sender));
+
+        Structs.Occurrence memory newOccurrence = occurrences[newId];
+        newOccurrence.creator = _sender;
+        newOccurrence.name = _name;
+        newOccurrence.description = _description;
+        newOccurrence.start = _start;
+        newOccurrence.end = _end;
+        newOccurrence.price = _price;
+        newOccurrence.token = _token;
+        newOccurrence.status = Enums.Status.Pending;
+        newOccurrence.staff = _staff;
+        newOccurrence.metadata = _metadata;
+        newOccurrence.attendees = _attendees;
 
         occurrences[newOccurrence.id] = newOccurrence;
         _occurrenceCount++;
@@ -337,7 +359,6 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
     )
         internal
     {
-        _checkDates(_start, _end);
         Structs.Occurrence memory _occurence = occurrences[_occurenceId];
 
         _occurence.name = _name;

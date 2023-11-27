@@ -19,4 +19,5 @@ library Errors {
     error MustAssignCreator();
     error MustAssignToken();
     error MustAssignPrice();
+    error NoAttendees();
 }
