@@ -13,16 +13,25 @@ contract IVStaffManager is AccessControl, Recover {
     bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    mapping(address => Structs.Staff) public staff;
+    mapping(bytes32 => mapping(address => Structs.Staff)) public staff;
 
     modifier onlyAdmin() {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "IVOccurrenceManager: caller is not an admin");
         _;
     }
 
-    modifier onlyStaff(address _staff) {
-        if (staff[_staff].status != Enums.Status.Active) {
+    modifier onlyStaff(bytes32 _occurrenceId, address _staff) {
+        if (staff[_occurrenceId][_staff].status != Enums.Status.Active) {
             revert Errors.OnlyStaff();
+        }
+        _;
+    }
+
+    modifier onlyStaffAndAdmin(bytes32 _occurrenceId, address _staff) {
+        if (staff[_occurrenceId][_staff].status != Enums.Status.Active) {
+            if (!hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
+                revert Errors.OnlyStaff();
+            }
         }
         _;
     }
@@ -32,6 +41,7 @@ contract IVStaffManager is AccessControl, Recover {
     }
 
     function addStaffMember(
+        bytes32 _occurrenceId,
         address _member,
         // uint256[] memory _levels,
         Structs.Metadata memory _metadata
@@ -40,7 +50,7 @@ contract IVStaffManager is AccessControl, Recover {
         onlyAdmin
     {
         Structs.Staff memory _staff = Structs.Staff({
-            id: keccak256(abi.encodePacked(_member)),
+            id: keccak256(abi.encodePacked(_occurrenceId, _member)),
             member: _member,
             metadata: _metadata,
             // levels: _levels,
@@ -53,10 +63,11 @@ contract IVStaffManager is AccessControl, Recover {
         //     _staff.levels[_member].push(_levels[i]);
         // }
 
-        staff[_staff.member] = _staff;
+        staff[_occurrenceId][_staff.member] = _staff;
     }
 
     function updateStaffMember(
+        bytes32 _occurrenceId,
         address _member,
         // uint256[] memory _levels,
         Structs.Metadata memory _metadata
@@ -76,18 +87,18 @@ contract IVStaffManager is AccessControl, Recover {
         //     _staff.levels[_member].push(_levels[i]);
         // }
 
-        staff[_staff.member] = _staff;
+        staff[_occurrenceId][_staff.member] = _staff;
     }
 
-    function removeStaffMember(address _member) external onlyAdmin {
-        delete staff[_member];
+    function removeStaffMember(bytes32 _occurrenceId, address _member) external onlyAdmin {
+        delete staff[_occurrenceId][_member];
     }
 
-    function updateStaffMemberStatus(address _member, Enums.Status _status) external onlyAdmin {
-        Structs.Staff memory _staff = staff[_member];
+    function updateStaffMemberStatus(bytes32 _occurrenceId, address _member, Enums.Status _status) external onlyAdmin {
+        Structs.Staff memory _staff = staff[_occurrenceId][_member];
         _staff.status = _status;
 
-        staff[_staff.member] = _staff;
+        staff[_occurrenceId][_staff.member] = _staff;
     }
 
     function addStaffMemberMinterRole(address _member) external onlyAdmin {

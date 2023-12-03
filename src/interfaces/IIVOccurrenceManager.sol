@@ -18,12 +18,13 @@ interface IIVOccurrenceManager {
         uint256 price,
         address token,
         address[] memory staff,
-        Structs.Metadata memory metadata
+        Structs.Metadata memory metadata,
+        address[] memory attendees
     )
         external
         returns (bytes32);
     function updateOccurrence(
-        bytes32 occurenceId,
+        bytes32 occurrenceId,
         string memory name,
         string memory description,
         uint256 start,
@@ -35,11 +36,11 @@ interface IIVOccurrenceManager {
         address[] memory attendees
     )
         external;
-    function getOccurrence(bytes32 _occurenceId) external view returns (Structs.Occurrence memory);
-    function hostOccurrence(bytes32 occurenceId, address[] memory) external;
-    function recognizeOccurrence(bytes32 occurenceId, Structs.Metadata memory) external;
-    function getStaffMemberByOccurrenceId(bytes32 occurenceId, address) external view returns (Structs.Staff memory);
-    function getStaffMembersForOccurrenceId(bytes32 occurenceId) external view returns (Structs.Staff[] memory);
+    function getOccurrence(bytes32 _occurrenceId) external view returns (Structs.Occurrence memory);
+    function hostOccurrence(bytes32 occurrenceId, address[] memory) external;
+    function recognizeOccurrence(bytes32 occurrenceId, Structs.Metadata memory) external;
+    function getStaffMemberByOccurrenceId(bytes32 occurrenceId, address) external view returns (Structs.Staff memory);
+    function getStaffMembersForOccurrenceId(bytes32 occurrenceId) external view returns (Structs.Staff[] memory);
     function getOccurrences() external view returns (Structs.Occurrence[] memory);
-    function getOccurrenceById(bytes32 occurenceIdId) external view returns (Structs.Occurrence memory);
+    function getOccurrenceById(bytes32 occurrenceIdId) external view returns (Structs.Occurrence memory);
 }

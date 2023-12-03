@@ -21,16 +21,18 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
     mapping(bytes32 => mapping(bytes32 => Structs.Attendee)) public attendeeAtEvent;
     uint256 private _occurrenceCount;
 
-    modifier onlyCreator(bytes32 _occurenceId, address _creator) {
-        if (occurrences[_occurenceId].creator != _creator) {
+    IVStaffManager public staffManager;
+
+    modifier onlyCreator(bytes32 _occurrenceId, address _creator) {
+        if (occurrences[_occurrenceId].creator != _creator) {
             revert Errors.NotCreator(_creator);
         }
         _;
     }
 
-    modifier occurrenceExists(bytes32 _occurenceIdId) {
-        if (occurrences[_occurenceIdId].id != _occurenceIdId) {
-            revert Errors.OccurrenceDoesNotExist(_occurenceIdId);
+    modifier occurrenceExists(bytes32 _occurrenceIdId) {
+        if (occurrences[_occurrenceIdId].id != _occurrenceIdId) {
+            revert Errors.OccurrenceDoesNotExist(_occurrenceIdId);
         }
         _;
     }
@@ -59,20 +61,23 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         uint256 _price,
         address _token,
         address[] memory _staff,
-        Structs.Metadata memory _metadata
+        Structs.Metadata memory _metadata,
+        address[] memory _attendees
     )
         external
         returns (bytes32)
     {
         _checkDates(_start, _end);
 
-        return _createOccurrence(_name, _description, _start, _end, _price, _token, _staff, _metadata, msg.sender);
+        return _createOccurrence(
+            _name, _description, _start, _end, _price, _token, _staff, _metadata, msg.sender, _attendees
+        );
     }
 
     /**
      * @notice Update an occurrence
      *
-     * @param _occurenceId The id of the occurrence
+     * @param _occurrenceId The id of the occurrence
      * @param _name The name of the occurrence
      * @param _description The description of the occurrence
      * @param _start The start time of the occurrence
@@ -83,7 +88,7 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
      * @param _metadata The metadata of the occurrence
      */
     function updateOccurrence(
-        bytes32 _occurenceId,
+        bytes32 _occurrenceId,
         string memory _name,
         string memory _description,
         uint256 _start,
@@ -95,44 +100,44 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         address[] memory _attendees
     )
         external
-        onlyCreator(_occurenceId, msg.sender)
-        occurrenceExists(_occurenceId)
+        onlyCreator(_occurrenceId, msg.sender)
+        occurrenceExists(_occurrenceId)
     {
         _checkDates(_start, _end);
 
         return _updateOccurrence(
-            _occurenceId, _name, _description, _start, _end, _price, _token, _staff, _metadata, _attendees
+            _occurrenceId, _name, _description, _start, _end, _price, _token, _staff, _metadata, _attendees
         );
     }
 
     /**
      * @notice Get an occurrence
      *
-     * @param _occurenceId The id of the occurrence
+     * @param _occurrenceId The id of the occurrence
      * @return occurrence The occurrence
      */
-    function getOccurrence(bytes32 _occurenceId)
+    function getOccurrence(bytes32 _occurrenceId)
         external
         view
-        occurrenceExists(_occurenceId)
+        occurrenceExists(_occurrenceId)
         returns (Structs.Occurrence memory)
     {
-        return occurrences[_occurenceId];
+        return occurrences[_occurrenceId];
     }
 
     /**
      * @notice Host an occurrence
      *
-     * @param _occurenceId The id of the occurrence
+     * @param _occurrenceId The id of the occurrence
      * @param _attendees The attendees of the occurrence
      */
     function hostOccurrence(
-        bytes32 _occurenceId,
+        bytes32 _occurrenceId,
         address[] memory _attendees
     )
         external
-        onlyCreator(_occurenceId, msg.sender)
-        occurrenceExists(_occurenceId)
+        onlyCreator(_occurrenceId, msg.sender)
+        occurrenceExists(_occurrenceId)
     {
         if (_attendees.length == 0) {
             revert Errors.NoAttendees();
@@ -144,112 +149,112 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
             }
         }
 
-        attendeesAtEvent[_occurenceId] = _attendees;
-        occurrences[_occurenceId].status = Enums.Status.Hosted;
-        occurrences[_occurenceId].attendees = _attendees;
+        attendeesAtEvent[_occurrenceId] = _attendees;
+        occurrences[_occurrenceId].status = Enums.Status.Hosted;
+        occurrences[_occurrenceId].attendees = _attendees;
     }
 
     /**
      * @notice Recognize an occurrence
      *
-     * @param _occurenceId The id of the occurrence
+     * @param _occurrenceId The id of the occurrence
      */
     function recognizeOccurrence(
-        bytes32 _occurenceId,
+        bytes32 _occurrenceId,
         Structs.Metadata memory _content
     )
         external
-        onlyStaff(msg.sender)
-        occurrenceExists(_occurenceId)
+        onlyStaffAndAdmin(_occurrenceId, msg.sender)
+        occurrenceExists(_occurrenceId)
     {
-        occurrences[_occurenceId].metadata = _content;
-        occurrences[_occurenceId].status = Enums.Status.Recognized;
-        occurrences[_occurenceId].metadata = _content;
+        occurrences[_occurrenceId].metadata = _content;
+        occurrences[_occurrenceId].status = Enums.Status.Recognized;
+        occurrences[_occurrenceId].metadata = _content;
     }
 
     /**
      * @notice Cancel an occurrence
      *
-     * @param _occurenceId The id of the occurrence
+     * @param _occurrenceId The id of the occurrence
      */
-    function cancelOccurrence(bytes32 _occurenceId)
+    function cancelOccurrence(bytes32 _occurrenceId)
         external
-        onlyCreator(_occurenceId, msg.sender)
-        occurrenceExists(_occurenceId)
+        onlyCreator(_occurrenceId, msg.sender)
+        occurrenceExists(_occurrenceId)
     {
-        occurrences[_occurenceId].status = Enums.Status.Canceled;
+        occurrences[_occurrenceId].status = Enums.Status.Canceled;
     }
 
     function updateOccurrenceDates(
-        bytes32 _occurenceId,
+        bytes32 _occurrenceId,
         uint256 _start,
         uint256 _end
     )
         external
-        onlyCreator(_occurenceId, msg.sender)
-        occurrenceExists(_occurenceId)
+        onlyCreator(_occurrenceId, msg.sender)
+        occurrenceExists(_occurrenceId)
     {
         _checkDates(_start, _end);
-        occurrences[_occurenceId].start = _start;
-        occurrences[_occurenceId].end = _end;
+        occurrences[_occurrenceId].start = _start;
+        occurrences[_occurrenceId].end = _end;
     }
 
     /**
      * @notice Reject an occurrence
      *
-     * @param _occurenceId The id of the occurrence
+     * @param _occurrenceId The id of the occurrence
      */
-    function rejectOccurrence(bytes32 _occurenceId)
+    function rejectOccurrence(bytes32 _occurrenceId)
         external
-        onlyCreator(_occurenceId, msg.sender)
-        occurrenceExists(_occurenceId)
+        onlyCreator(_occurrenceId, msg.sender)
+        occurrenceExists(_occurrenceId)
     {
-        occurrences[_occurenceId].status = Enums.Status.Rejected;
+        occurrences[_occurrenceId].status = Enums.Status.Rejected;
     }
 
     /**
      * @notice Get a staff member
      *
-     * @param _occurenceId The ID of the occurrence
+     * @param _occurrenceId The ID of the occurrence
      * @param _member The address of the staff member
      * @return staffMember The staff member
      */
     function getStaffMemberByOccurrenceId(
-        bytes32 _occurenceId,
+        bytes32 _occurrenceId,
         address _member
     )
         external
         view
-        occurrenceExists(_occurenceId)
+        occurrenceExists(_occurrenceId)
         returns (Structs.Staff memory)
     {
-        return staff[_member];
+        return staff[_occurrenceId][_member];
     }
 
     /**
      * @notice Get staff members for an occurrence
      *
-     * @param _occurenceId The ID of the occurrence
+     * @param _occurrenceId The ID of the occurrence
      * @return staffMembers The staff members
      */
-    function getStaffMembersForOccurrenceId(bytes32 _occurenceId)
+    function getStaffMembersForOccurrenceId(bytes32 _occurrenceId)
         external
         view
-        occurrenceExists(_occurenceId)
+        occurrenceExists(_occurrenceId)
         returns (Structs.Staff[] memory)
     {
-        Structs.Occurrence memory occurrence = occurrences[_occurenceId];
+        Structs.Occurrence memory occurrence = occurrences[_occurrenceId];
         Structs.Staff[] memory _staff = new Structs.Staff[](occurrence.staff.length);
 
         for (uint256 i = 0; i < occurrence.staff.length; i++) {
-            _staff[i] = staff[occurrence.staff[i]];
+            _staff[i] = staff[_occurrenceId][occurrence.staff[i]];
         }
 
         return _staff;
     }
 
-    function getAttendeesByOccurrenceId(bytes32 _occurenceId) external view returns (address[] memory) {
-        return attendeesAtEvent[_occurenceId];
+    function getAttendeesByOccurrenceId(bytes32 _occurrenceId) external view returns (address[] memory) {
+        return attendeesAtEvent[_occurrenceId];
     }
 
     function getOccurrences() external view returns (Structs.Occurrence[] memory) {
@@ -266,11 +271,11 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
     /**
      * @notice Get an occurrence by ID
      *
-     * @param _occurenceIdId The ID of the occurrence
+     * @param _occurrenceIdId The ID of the occurrence
      * @return occurrence The occurrence
      */
-    function getOccurrenceById(bytes32 _occurenceIdId) external view returns (Structs.Occurrence memory) {
-        return occurrences[_occurenceIdId];
+    function getOccurrenceById(bytes32 _occurrenceIdId) external view returns (Structs.Occurrence memory) {
+        return occurrences[_occurrenceIdId];
     }
 
     /**
@@ -305,15 +310,16 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         address _token,
         address[] memory _staff,
         Structs.Metadata memory _metadata,
-        address _sender
+        address _sender,
+        address[] memory _attendees
     )
         internal
         returns (bytes32)
     {
-        address[] memory _attendees = new address[](0);
         bytes32 newId = keccak256(abi.encode(_name, _sender));
 
         Structs.Occurrence memory newOccurrence = occurrences[newId];
+        newOccurrence.id = newId;
         newOccurrence.creator = _sender;
         newOccurrence.name = _name;
         newOccurrence.description = _description;
@@ -329,13 +335,17 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
         occurrences[newOccurrence.id] = newOccurrence;
         _occurrenceCount++;
 
-        // Structs.Staff memory _staffMember = staff[_sender];
-        // _staffMember.id = keccak256(abi.encode(newId, _sender));
-        // _staffMember.member = _sender;
-        // _staffMember.metadata = Structs.Metadata({ protocol: 1, pointer: "0x7128364591823674872ghsdfafjdhf" });
-        // _staffMember.status = Enums.Status.Active;
+        for (uint256 i = 0; i < _staff.length; i++) {
+            Structs.Staff memory _staffMember = staff[newOccurrence.id][_staff[i]];
+            _staffMember = staff[newOccurrence.id][_staff[i]];
+            _staffMember.id = keccak256(abi.encode(newId, _staff[i]));
+            _staffMember.member = _staff[i];
+            _staffMember.metadata = Structs.Metadata({ protocol: 1, pointer: "0x7128364591823674872ghsdfafjdhf" });
+            _staffMember.status = Enums.Status.Active;
 
-        // staff[_sender] = _staffMember;
+            staff[newOccurrence.id][_staff[i]] = _staffMember;
+            // addStaffMember(newOccurrence.id, _staffMember.member, _metadata);
+        }
 
         return newOccurrence.id;
     }
@@ -343,7 +353,7 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
     /**
      * @notice Update an occurrence
      *
-     * @param _occurenceId The id of the occurrence
+     * @param _occurrenceId The id of the occurrence
      * @param _name The name of the occurrence
      * @param _description The description of the occurrence
      * @param _start The start time of the occurrence
@@ -354,7 +364,7 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
      * @param _metadata The metadata of the occurrence
      */
     function _updateOccurrence(
-        bytes32 _occurenceId,
+        bytes32 _occurrenceId,
         string memory _name,
         string memory _description,
         uint256 _start,
@@ -367,18 +377,18 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
     )
         internal
     {
-        Structs.Occurrence memory _occurence = occurrences[_occurenceId];
+        Structs.Occurrence memory _occurrence = occurrences[_occurrenceId];
 
-        _occurence.name = _name;
-        _occurence.description = _description;
-        _occurence.start = _start;
-        _occurence.end = _end;
-        _occurence.price = _price;
-        _occurence.token = _token;
-        _occurence.staff = _staff;
-        _occurence.metadata = _metadata;
-        _occurence.attendees = _attendees;
+        _occurrence.name = _name;
+        _occurrence.description = _description;
+        _occurrence.start = _start;
+        _occurrence.end = _end;
+        _occurrence.price = _price;
+        _occurrence.token = _token;
+        _occurrence.staff = _staff;
+        _occurrence.metadata = _metadata;
+        _occurrence.attendees = _attendees;
 
-        occurrences[_occurenceId] = _occurence;
+        occurrences[_occurrenceId] = _occurrence;
     }
 }
