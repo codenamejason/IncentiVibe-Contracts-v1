@@ -17,7 +17,7 @@ library Structs {
         address member;
         Metadata metadata;
         // member address to their level (the user can have multiple levels and use how they want)
-        // uint256[] levels;
+        // uint256[] class;
         Enums.Status status;
     }
 
@@ -26,6 +26,18 @@ library Structs {
         address attendee;
         Metadata metadata;
         Enums.Status status;
+    }
+
+    struct Community {
+        // keccak256(abi.encodePacked(_name, _creator))
+        bytes32 id;
+        address creator;
+        string name;
+        string description;
+        string imagePointer;
+        Metadata metadata;
+        address[] staff;
+        address[] attendees;
     }
 
     struct Occurrence {
