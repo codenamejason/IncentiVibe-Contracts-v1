@@ -11,13 +11,7 @@ contract IVERC721BaseTokenTest is Test {
 
     function setUp() public {
         deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
-        tokenContract = new IVERC721BaseToken(
-            deployerAddress,
-            deployerAddress,
-            deployerAddress,
-            "TestToken NFT",
-            "TST"
-        );
+        tokenContract = new IVERC721BaseToken(deployerAddress, deployerAddress, deployerAddress, "TestToken NFT", "TST");
     }
 
     function test_deploy() public {

@@ -300,7 +300,6 @@ contract IVERC721BaseToken is
     /**
      * Overrides
      */
-
     function _update(
         address to,
         uint256 tokenId,

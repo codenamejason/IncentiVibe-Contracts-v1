@@ -281,7 +281,6 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
     /**
      * Internal Functions
      */
-
     function _checkDates(uint256 _start, uint256 _end) internal pure {
         if (_start > _end) {
             revert Errors.InvalidDates(_start, _end);

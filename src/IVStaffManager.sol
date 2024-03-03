@@ -8,7 +8,7 @@ import { Recover } from "../src/library/Recover.sol";
 
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract IVStaffManager is AccessControl, Recover {
+abstract contract IVStaffManager is AccessControl, Recover {
     bytes32 public constant STAFF_ROLE = keccak256("STAFF_ROLE");
     bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -47,6 +47,7 @@ contract IVStaffManager is AccessControl, Recover {
         Structs.Metadata memory _metadata
     )
         external
+        virtual
         onlyAdmin
     {
         Structs.Staff memory _staff = Structs.Staff({
@@ -73,6 +74,7 @@ contract IVStaffManager is AccessControl, Recover {
         Structs.Metadata memory _metadata
     )
         external
+        virtual
         onlyAdmin
     {
         Structs.Staff memory _staff = Structs.Staff({
@@ -90,18 +92,26 @@ contract IVStaffManager is AccessControl, Recover {
         staff[_occurrenceId][_staff.member] = _staff;
     }
 
-    function removeStaffMember(bytes32 _occurrenceId, address _member) external onlyAdmin {
+    function removeStaffMember(bytes32 _occurrenceId, address _member) external virtual onlyAdmin {
         delete staff[_occurrenceId][_member];
     }
 
-    function updateStaffMemberStatus(bytes32 _occurrenceId, address _member, Enums.Status _status) external onlyAdmin {
+    function updateStaffMemberStatus(
+        bytes32 _occurrenceId,
+        address _member,
+        Enums.Status _status
+    )
+        external
+        virtual
+        onlyAdmin
+    {
         Structs.Staff memory _staff = staff[_occurrenceId][_member];
         _staff.status = _status;
 
         staff[_occurrenceId][_staff.member] = _staff;
     }
 
-    function addStaffMemberMinterRole(address _member) external onlyAdmin {
+    function addStaffMemberMinterRole(address _member) external virtual onlyAdmin {
         _grantRole(MINTER_ROLE, _member);
     }
 
@@ -110,7 +120,7 @@ contract IVStaffManager is AccessControl, Recover {
      * @dev This function is only callable by the owner
      * @param _member The member to remove
      */
-    function removeCampaignMember(address _member) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function removeCampaignMember(address _member) external virtual onlyRole(DEFAULT_ADMIN_ROLE) {
         revokeRole(MINTER_ROLE, _member);
     }
 }

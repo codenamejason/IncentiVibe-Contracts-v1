@@ -315,7 +315,6 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
      * @param _tokenId The token ID
      * @return bool Returns true if the token has been redeemed
      */
-
     function getRedeemed(bytes32 _occurrenceId, uint256 _tokenId) external view returns (bool) {
         return redeemed[_occurrenceId][_tokenId];
     }
@@ -397,7 +396,6 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
     /**
      * Overrides
      */
-
     function supportsInterface(bytes4 interfaceId)
         public
         view

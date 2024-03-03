@@ -37,7 +37,8 @@ library Structs {
         string imagePointer;
         Metadata metadata;
         address[] staff;
-        address[] attendees;
+        bytes32[] occurrences;
+        Enums.Status status;
     }
 
     struct Occurrence {

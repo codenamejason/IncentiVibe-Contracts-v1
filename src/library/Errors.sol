@@ -21,4 +21,5 @@ library Errors {
     error MustAssignPrice();
     error NoAttendees();
     error OnlyStaff();
+    error NotFound();
 }
