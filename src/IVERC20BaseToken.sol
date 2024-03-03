@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity 0.8.20;
+pragma solidity 0.8.22;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
@@ -12,14 +12,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 /// @notice This is the base token contract used for the IVToken contracts.
 /// @dev This contract is used to deploy the projects ERC20 token contracts.
 /// @author @codenamejason <jax@jaxcoder.xyz>
-contract IVERC20BaseToken is
-    ERC20,
-    ERC20Burnable,
-    ERC20Pausable,
-    AccessControl,
-    ERC20Permit,
-    ERC20Votes
-{
+contract IVERC20BaseToken is ERC20, ERC20Burnable, ERC20Pausable, AccessControl, ERC20Permit, ERC20Votes {
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
@@ -45,7 +38,10 @@ contract IVERC20BaseToken is
         address pauser,
         string memory name,
         string memory symbol
-    ) ERC20(name, symbol) ERC20Permit(name) {
+    )
+        ERC20(name, symbol)
+        ERC20Permit(name)
+    {
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(MINTER_ROLE, minter);
         _grantRole(PAUSER_ROLE, pauser);
@@ -65,10 +61,7 @@ contract IVERC20BaseToken is
 
     // The following functions are overrides required by Solidity.
 
-    function _update(address from, address to, uint256 value)
-        internal
-        override(ERC20, ERC20Pausable, ERC20Votes)
-    {
+    function _update(address from, address to, uint256 value) internal override(ERC20, ERC20Pausable, ERC20Votes) {
         super._update(from, to, value);
     }
 

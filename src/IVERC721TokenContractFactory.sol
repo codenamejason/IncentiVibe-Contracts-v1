@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity 0.8.20;
+pragma solidity 0.8.22;
 
 import { IVERC721BaseToken } from "./IVERC721BaseToken.sol";
 import { Errors } from "./library/Errors.sol";
@@ -77,9 +77,13 @@ contract IVERC721TokenContractFactory {
         address _pauser,
         string memory _name,
         string memory _symbol
-    ) external payable onlyDeployer returns (address deployedContract) {
-        deployedContract =
-            address(new IVERC721BaseToken(_defaultAdmin, _minter, _pauser, _name, _symbol));
+    )
+        external
+        payable
+        onlyDeployer
+        returns (address deployedContract)
+    {
+        deployedContract = address(new IVERC721BaseToken(_defaultAdmin, _minter, _pauser, _name, _symbol));
 
         // Set the token to the deployedTokens mapping
         deployedTokens[deployedContract] = Token({

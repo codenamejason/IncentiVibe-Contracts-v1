@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.22;
 
 import { Test, console2, StdUtils } from "forge-std/Test.sol";
 
@@ -11,13 +11,7 @@ contract IVERC721BaseTokenTest is Test {
 
     function setUp() public {
         deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
-        tokenContract = new IVERC721BaseToken(
-            deployerAddress,
-            deployerAddress,
-            deployerAddress,
-            "TestToken NFT",
-            "TST"
-        );
+        tokenContract = new IVERC721BaseToken(deployerAddress, deployerAddress, deployerAddress, "TestToken NFT", "TST");
     }
 
     function test_deploy() public {
@@ -29,9 +23,7 @@ contract IVERC721BaseTokenTest is Test {
 
     function test_mint() public {
         vm.startPrank(deployerAddress);
-        tokenContract.addClass(
-            "Volunteer", "Test volunteer class", "https://yourpointer", "", 500000
-        );
+        tokenContract.addClass("Volunteer", "Test volunteer class", "https://yourpointer", "", 500_000);
         tokenContract.awardItem(makeAddr("recipient1"), 1);
         vm.stopPrank();
 

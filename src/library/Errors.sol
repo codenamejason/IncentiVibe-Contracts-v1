@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity 0.8.22;
 
 library Errors {
     error Unauthorized(address caller);
@@ -12,4 +12,14 @@ library Errors {
     error ZeroAddress();
     error ZeroAmount();
     error TransferFailed();
+    error GatingEnabled();
+    error InvalidDates(uint256 start, uint256 end);
+    error MustAssignAttentees();
+    error MustAssignStaff();
+    error MustAssignCreator();
+    error MustAssignToken();
+    error MustAssignPrice();
+    error NoAttendees();
+    error OnlyStaff();
+    error NotFound();
 }

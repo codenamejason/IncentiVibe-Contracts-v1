@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity 0.8.22;
 
 import { Test, console2, StdUtils } from "forge-std/Test.sol";
 
@@ -13,8 +13,7 @@ contract IVERC20BaseTokenTest is Test {
 
     function setUp() public {
         deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
-        tokenContract =
-        new IVERC20BaseToken(deployerAddress, deployerAddress, deployerAddress, "TestToken", "TST");
+        tokenContract = new IVERC20BaseToken(deployerAddress, deployerAddress, deployerAddress, "TestToken", "TST");
     }
 
     function test_deploy() public {

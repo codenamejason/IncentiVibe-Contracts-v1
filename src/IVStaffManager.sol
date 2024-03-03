@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity 0.8.20;
+pragma solidity 0.8.22;
 
 import { Enums } from "./library/Enums.sol";
 import { Structs } from "../src/library/Structs.sol";
@@ -8,21 +8,31 @@ import { Recover } from "../src/library/Recover.sol";
 
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract IVStaffManager is AccessControl, Recover {
+abstract contract IVStaffManager is AccessControl, Recover {
     bytes32 public constant STAFF_ROLE = keccak256("STAFF_ROLE");
+    bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    mapping(address => Structs.Staff) public staff;
+    mapping(bytes32 => mapping(address => Structs.Staff)) public staff;
 
     modifier onlyAdmin() {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "IVOccurrenceManager: caller is not an admin"
-        );
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "IVOccurrenceManager: caller is not an admin");
         _;
     }
 
-    modifier onlyStaff() {
-        require(hasRole(STAFF_ROLE, msg.sender), "IVOccurrenceManager: caller is not a staff");
+    modifier onlyStaff(bytes32 _occurrenceId, address _staff) {
+        if (staff[_occurrenceId][_staff].status != Enums.Status.Active) {
+            revert Errors.OnlyStaff();
+        }
+        _;
+    }
+
+    modifier onlyStaffAndAdmin(bytes32 _occurrenceId, address _staff) {
+        if (staff[_occurrenceId][_staff].status != Enums.Status.Active) {
+            if (!hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
+                revert Errors.OnlyStaff();
+            }
+        }
         _;
     }
 
@@ -31,12 +41,17 @@ contract IVStaffManager is AccessControl, Recover {
     }
 
     function addStaffMember(
+        bytes32 _occurrenceId,
         address _member,
         // uint256[] memory _levels,
         Structs.Metadata memory _metadata
-    ) external onlyAdmin {
+    )
+        external
+        virtual
+        onlyAdmin
+    {
         Structs.Staff memory _staff = Structs.Staff({
-            id: keccak256(abi.encodePacked(_member)),
+            id: keccak256(abi.encodePacked(_occurrenceId, _member)),
             member: _member,
             metadata: _metadata,
             // levels: _levels,
@@ -49,14 +64,19 @@ contract IVStaffManager is AccessControl, Recover {
         //     _staff.levels[_member].push(_levels[i]);
         // }
 
-        staff[_staff.member] = _staff;
+        staff[_occurrenceId][_staff.member] = _staff;
     }
 
     function updateStaffMember(
+        bytes32 _occurrenceId,
         address _member,
         // uint256[] memory _levels,
         Structs.Metadata memory _metadata
-    ) external onlyAdmin {
+    )
+        external
+        virtual
+        onlyAdmin
+    {
         Structs.Staff memory _staff = Structs.Staff({
             id: keccak256(abi.encodePacked(_member)),
             member: _member,
@@ -69,17 +89,29 @@ contract IVStaffManager is AccessControl, Recover {
         //     _staff.levels[_member].push(_levels[i]);
         // }
 
-        staff[_staff.member] = _staff;
+        staff[_occurrenceId][_staff.member] = _staff;
     }
 
-    function updateStaffMemberStatus(address _member, Enums.Status _status) external onlyAdmin {
-        Structs.Staff memory _staff = staff[_member];
+    function removeStaffMember(bytes32 _occurrenceId, address _member) external virtual onlyAdmin {
+        delete staff[_occurrenceId][_member];
+    }
+
+    function updateStaffMemberStatus(
+        bytes32 _occurrenceId,
+        address _member,
+        Enums.Status _status
+    )
+        external
+        virtual
+        onlyAdmin
+    {
+        Structs.Staff memory _staff = staff[_occurrenceId][_member];
         _staff.status = _status;
 
-        staff[_staff.member] = _staff;
+        staff[_occurrenceId][_staff.member] = _staff;
     }
 
-    function addStaffMemberMinterRole(address _member) external onlyAdmin {
+    function addStaffMemberMinterRole(address _member) external virtual onlyAdmin {
         _grantRole(MINTER_ROLE, _member);
     }
 
@@ -88,7 +120,7 @@ contract IVStaffManager is AccessControl, Recover {
      * @dev This function is only callable by the owner
      * @param _member The member to remove
      */
-    function removeCampaignMember(address _member) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function removeCampaignMember(address _member) external virtual onlyRole(DEFAULT_ADMIN_ROLE) {
         revokeRole(MINTER_ROLE, _member);
     }
 }

@@ -1,6 +1,7 @@
 # Compiler files
 cache/
 out/
+node_modules/
 
 # Ignores broadcast logs
 !/broadcast
@@ -11,6 +12,9 @@ broadcast/
 # Docs
 docs/
 
-# Dotenv file
-.env
-
+# files
+*.env
+*.log
+.DS_Store
+.pnp.*
+lcov.info
