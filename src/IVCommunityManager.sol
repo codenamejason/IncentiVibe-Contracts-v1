@@ -31,11 +31,7 @@ contract IVCommunityManager is IIVCommunityManager, IVStaffManager {
      */
     function createCommunity(bytes memory _data) external returns (bytes32) {
         Structs.Community memory _community = abi.decode(_data, (Structs.Community));
-
         bytes32 _communityId = keccak256(abi.encodePacked(_community.name, _community.creator));
-
-        require(community[_communityId].status != Enums.Status.Active, "IVCommunityManager: community already exists");
-
         community[_communityId] = _community;
 
         return _communityId;
