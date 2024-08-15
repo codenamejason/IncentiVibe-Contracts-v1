@@ -42,7 +42,9 @@ contract IVGovernor is
         return super.votingPeriod();
     }
 
-    function quorum(uint256 blockNumber)
+    function quorum(
+        uint256 blockNumber
+    )
         public
         view
         override(Governor, GovernorVotesQuorumFraction)
@@ -51,7 +53,9 @@ contract IVGovernor is
         return super.quorum(blockNumber);
     }
 
-    function state(uint256 proposalId)
+    function state(
+        uint256 proposalId
+    )
         public
         view
         override(Governor, GovernorTimelockControl)
@@ -60,7 +64,9 @@ contract IVGovernor is
         return super.state(proposalId);
     }
 
-    function proposalNeedsQueuing(uint256 proposalId)
+    function proposalNeedsQueuing(
+        uint256 proposalId
+    )
         public
         view
         override(Governor, GovernorTimelockControl)

@@ -396,7 +396,9 @@ contract Will4USNFT is ERC721URIStorage, AccessControl {
     /**
      * Overrides
      */
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(
+        bytes4 interfaceId
+    )
         public
         view
         virtual

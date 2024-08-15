@@ -77,7 +77,9 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
      * @param _occurrenceId The ID of the occurrence
      * @return staffMembers The staff members
      */
-    function getStaffMembersForOccurrenceId(bytes32 _occurrenceId)
+    function getStaffMembersForOccurrenceId(
+        bytes32 _occurrenceId
+    )
         external
         view
         occurrenceExists(_occurrenceId)
@@ -209,7 +211,9 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
      *
      * @param _occurrenceId The id of the occurrence
      */
-    function cancelOccurrence(bytes32 _occurrenceId)
+    function cancelOccurrence(
+        bytes32 _occurrenceId
+    )
         external
         onlyCreator(_occurrenceId, msg.sender)
         occurrenceExists(_occurrenceId)
@@ -236,7 +240,9 @@ contract IVOccurrenceManager is IIVOccurrenceManager, IVStaffManager {
      *
      * @param _occurrenceId The id of the occurrence
      */
-    function rejectOccurrence(bytes32 _occurrenceId)
+    function rejectOccurrence(
+        bytes32 _occurrenceId
+    )
         external
         onlyCreator(_occurrenceId, msg.sender)
         occurrenceExists(_occurrenceId)

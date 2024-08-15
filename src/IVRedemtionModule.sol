@@ -2,11 +2,8 @@
 pragma solidity 0.8.22;
 
 import { Errors } from "./library/Errors.sol";
-import { Structs } from "./library/Structs.sol";
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-contract RedemtionModule {
+contract IVRedemtionModule {
     // occurrenceId => token => bool
     mapping(bytes32 => mapping(uint256 => bool)) public redeemed;
 
