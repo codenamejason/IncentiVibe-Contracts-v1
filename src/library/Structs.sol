@@ -41,6 +41,9 @@ library Structs {
         Enums.Status status;
     }
 
+    /**
+     * Occurrences are Events within a community
+     */
     struct Occurrence {
         // keccak256(abi.encodePacked(_name, _creator))
         bytes32 id;

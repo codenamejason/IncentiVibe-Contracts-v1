@@ -30,11 +30,11 @@ contract IVOccurrenceManagerTest is Test {
 
     function test_createOccurrence() public {
         bytes32 newOccurrence = __createOccurrence();
-        Structs.Occurrence memory occurrenceStruct = ivOccurrenceManager.getOccurrence(newOccurrence);
+        Structs.Occurrence memory occurrenceStruct = ivOccurrenceManager.getOccurrenceById(newOccurrence);
 
         assertEq(occurrenceStruct.id, newOccurrence);
-        assertEq(occurrenceStruct.name, "Test Event");
-        assertEq(occurrenceStruct.description, "Test description");
+        assertEq(occurrenceStruct.name, "name2");
+        assertEq(occurrenceStruct.description, "description2");
         assertEq(occurrenceStruct.start, 1);
     }
 
@@ -42,18 +42,23 @@ contract IVOccurrenceManagerTest is Test {
         bytes32 _occurrenceId = __createOccurrence();
 
         vm.prank(creator);
-        ivOccurrenceManager.updateOccurrence(
-            _occurrenceId,
-            "name2",
-            "description2",
-            2,
-            3,
-            4,
-            address(makeAddr("token2")),
-            staff,
-            Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" }),
-            attendees
-        );
+        Structs.Occurrence memory occurrenceToUpdate = Structs.Occurrence({
+            id: _occurrenceId,
+            creator: 0x3f15B8c6F9939879Cb030D6dd935348E57109637,
+            name: "name2",
+            description: "description2",
+            start: 2,
+            end: 3,
+            price: 4,
+            token: address(makeAddr("token2")),
+            staff: staff,
+            status: Enums.Status.Pending,
+            metadata: Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" }),
+            attendees: attendees
+        });
+        bytes memory encodedOccurrence = abi.encode(occurrenceToUpdate);
+
+        ivOccurrenceManager.updateOccurrence(_occurrenceId, encodedOccurrence);
 
         (bytes32 _occurrence2Id,, string memory name, string memory description, uint256 start,,,,,) =
             ivOccurrenceManager.occurrences(_occurrenceId);
@@ -65,56 +70,72 @@ contract IVOccurrenceManagerTest is Test {
     }
 
     function testRevert_updateOccurrence_NotCreator() public {
-        bytes32 _occurrence = __createOccurrence();
+        bytes32 _occurrenceId = __createOccurrence();
         vm.prank(makeAddr("not-creator"));
         vm.expectRevert();
-        ivOccurrenceManager.updateOccurrence(
-            _occurrence,
-            "name2",
-            "description2",
-            2,
-            3,
-            4,
-            address(makeAddr("token2")),
-            staff,
-            Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" }),
-            attendees
-        );
+        Structs.Occurrence memory occurrenceToUpdate = Structs.Occurrence({
+            id: _occurrenceId,
+            creator: makeAddr("creator"),
+            name: "name2",
+            description: "description2",
+            start: 2,
+            end: 3,
+            price: 4,
+            token: address(makeAddr("token2")),
+            staff: staff,
+            status: Enums.Status.Pending,
+            metadata: Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" }),
+            attendees: attendees
+        });
+        bytes memory encodedOccurrence = abi.encode(occurrenceToUpdate);
+        ivOccurrenceManager.updateOccurrence(_occurrenceId, encodedOccurrence);
     }
 
     function testRevert_updateOccurrence_OccurrenceDoesNotExist() public {
+        bytes32 _occurrenceId = __createOccurrence();
         vm.prank(creator);
         vm.expectRevert();
-        ivOccurrenceManager.updateOccurrence(
-            bytes32("0x1234"),
-            "name2",
-            "description2",
-            2,
-            3,
-            4,
-            address(makeAddr("token2")),
-            staff,
-            Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" }),
-            attendees
-        );
+
+        Structs.Occurrence memory occurrenceToUpdate = Structs.Occurrence({
+            id: _occurrenceId,
+            creator: 0x3f15B8c6F9939879Cb030D6dd935348E57109637,
+            name: "name2",
+            description: "description2",
+            start: 2,
+            end: 3,
+            price: 4,
+            token: address(makeAddr("token2")),
+            staff: staff,
+            status: Enums.Status.Pending,
+            metadata: Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" }),
+            attendees: attendees
+        });
+        bytes memory encodedOccurrence = abi.encode(occurrenceToUpdate);
+        vm.prank(creator);
+        vm.expectRevert();
+        ivOccurrenceManager.updateOccurrence(_occurrenceId, encodedOccurrence);
     }
 
     function testRevert_updateOccurrence_InvalidDates() public {
-        bytes32 _occurrence = __createOccurrence();
+        bytes32 _occurrenceId = __createOccurrence();
+        Structs.Occurrence memory occurrenceToUpdate = Structs.Occurrence({
+            id: _occurrenceId,
+            creator: 0x3f15B8c6F9939879Cb030D6dd935348E57109637,
+            name: "name2",
+            description: "description2",
+            start: 4,
+            end: 3,
+            price: 4,
+            token: address(makeAddr("token2")),
+            staff: staff,
+            status: Enums.Status.Pending,
+            metadata: Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" }),
+            attendees: attendees
+        });
+        bytes memory encodedOccurrence = abi.encode(occurrenceToUpdate);
         vm.prank(creator);
         vm.expectRevert();
-        ivOccurrenceManager.updateOccurrence(
-            _occurrence,
-            "name2",
-            "description2",
-            4,
-            3,
-            4,
-            address(makeAddr("token2")),
-            staff,
-            Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" }),
-            attendees
-        );
+        ivOccurrenceManager.updateOccurrence(_occurrenceId, encodedOccurrence);
     }
 
     function testRevert_hostOccurrence_NotCreator() public {
@@ -154,11 +175,12 @@ contract IVOccurrenceManagerTest is Test {
 
     function test_getOccurrence() public {
         bytes32 newOccurrence = __createOccurrence();
-        Structs.Occurrence memory occurrenceStruct = ivOccurrenceManager.getOccurrence(newOccurrence);
+
+        Structs.Occurrence memory occurrenceStruct = ivOccurrenceManager.getOccurrenceById(newOccurrence);
 
         assertEq(occurrenceStruct.id, newOccurrence);
-        assertEq(occurrenceStruct.name, "Test Event");
-        assertEq(occurrenceStruct.description, "Test description");
+        assertEq(occurrenceStruct.name, "name2");
+        assertEq(occurrenceStruct.description, "description2");
         assertEq(occurrenceStruct.start, 1);
     }
 
@@ -196,16 +218,21 @@ contract IVOccurrenceManagerTest is Test {
 
     function __createOccurrence() internal returns (bytes32) {
         vm.prank(creator);
-        return ivOccurrenceManager.createOccurrence(
-            "Test Event",
-            "Test description",
-            1,
-            2,
-            3,
-            address(makeAddr("token")),
-            staff,
-            Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" }),
-            attendees
-        );
+        Structs.Occurrence memory occurrenceToUpdate = Structs.Occurrence({
+            id: keccak256(abi.encodePacked("name2", "description2")),
+            creator: 0x3f15B8c6F9939879Cb030D6dd935348E57109637,
+            name: "name2",
+            description: "description2",
+            start: 1,
+            end: 3,
+            price: 4,
+            token: address(makeAddr("token2")),
+            staff: staff,
+            status: Enums.Status.Pending,
+            metadata: Structs.Metadata({ protocol: 1, pointer: "0x230847695gbv2-3" }),
+            attendees: attendees
+        });
+        bytes memory encodedOccurrence = abi.encode(occurrenceToUpdate);
+        return ivOccurrenceManager.createOccurrence(encodedOccurrence);
     }
 }
